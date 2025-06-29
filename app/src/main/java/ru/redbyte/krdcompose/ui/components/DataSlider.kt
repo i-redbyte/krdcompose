@@ -51,6 +51,48 @@ import ru.redbyte.krdcompose.ui.components.DataSliderDefaults.MIN_ALPHA
 import ru.redbyte.krdcompose.ui.components.DataSliderDefaults.MIN_SCALE
 import kotlin.math.absoluteValue
 
+/**
+ * ### DataSlider
+ *
+ * Универсальный свайпер-карусель, предназначенный для показа набора страниц-картинок с подписью.
+ * Центральный элемент масштабируется и (опционально) слегка поворачивается, элементы по краям
+ * — уменьшаются, отдаляются и размываются.
+ * Работает поверх `HorizontalPager` из `accompanist-pager` и сохраняет все публичные
+ * параметры для полной совместимости.
+ *
+ * #### Пример использования
+ * ```kotlin
+ * val pages = persistentListOf(
+ *     DataPage({ Image(painterResource(R.drawable.pic1), null) }, "Первая"),
+ *     DataPage({ Image(painterResource(R.drawable.pic2), null) }, "Вторая"),
+ *     DataPage({ Image(painterResource(R.drawable.pic3), null) }, "Третья")
+ * )
+ *
+ * DataSlider(
+ *     pages = pages,
+ *     enableSwipe = true,
+ *     rotateImage = true,
+ *     backgroundColor = MaterialTheme.colorScheme.background
+ * )
+ * ```
+ *
+ * @param pages            Неизменяемый список страниц. Каждая страница — это пара из контента
+ *                         (любая `@Composable` функция, например `Image`) и подписи.
+ * @param modifier         Внешний `Modifier`. Позволяет управлять отступами, клипом, размером и т. д.
+ * @param enableSwipe      Если `false`, свайпы блокируются, и перелистывать можно только кодом
+ *                         через `pagerState`.
+ * @param rotateImage      Добавлять ли эффект лёгкого 3-D поворота центральному элементу.
+ * @param backgroundColor  Цвет фона под слайдером и подписью.
+ * @param pagerState       Состояние `PagerState`. Передайте собственное, если нужно
+ *                         контролировать текущую страницу извне или синхронизировать несколько
+ *                         компонентов.
+ * @param onPageWidthCalc  Колбэк, сообщающий фактическую ширину страницы (с учётом spacing) в px.
+ *                         Может быть полезен для синхронизации прокрутки кастомных индикаторов,
+ *                         — оставьте пустым, если не нужен.
+ *
+ * @see DataPage           Модель страницы слайдера
+ * @see rememberPagerState Чтобы создать управляющее состояние вне компонента
+ */
 @Composable
 fun DataSlider(
     pages: ImmutableList<DataPage>,
@@ -142,16 +184,15 @@ private fun PagerItem(
     onPageWidthCalc: (Float) -> Unit
 ) {
     val pivotOffsetPx = with(LocalDensity.current) { DataSliderDefaults.PIVOT_OFFSET.dp.toPx() }
-    val density = LocalDensity.current
+    val spacingPx = with(LocalDensity.current) { DataSliderDefaults.PAGE_SPACING.dp.toPx() }
+
     Box(
         modifier = Modifier
             .padding(top = 0.dp)
             .width(itemWidth)
             .aspectRatio(DataSliderDefaults.IMAGE_ASPECT_RATIO)
             .onSizeChanged { size ->
-                val pageWidthPx = size.width.toFloat()
-                val spacingPx = with(density) { DataSliderDefaults.PAGE_SPACING.dp.toPx() }
-                onPageWidthCalc(pageWidthPx + spacingPx)
+                onPageWidthCalc(size.width + spacingPx)
             }
             .graphicsLayer {
                 applyPageTransformation(
@@ -163,92 +204,6 @@ private fun PagerItem(
             }
     ) {
         pages[page].content()
-    }
-}
-
-private fun GraphicsLayerScope.applyPageTransformation(
-    page: Int,
-    pagerState: PagerState,
-    rotateImage: Boolean,
-    pivotOffsetPx: Float
-) {
-    val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
-    val absOffset = pageOffset.absoluteValue.coerceIn(0f, 1f)
-
-    val scale = lerp(
-        MIN_SCALE,
-        MAX_SCALE,
-        1f - absOffset
-    )
-
-    val rotation = if (rotateImage) {
-        MAX_ROTATION_DEGREES * (1f - absOffset)
-    } else {
-        0f
-    }
-
-    val blur = calculateBlurEffect(pageOffset)
-
-    val pivotOffsetRelative = pivotOffsetPx / size.width
-    val tx = calculatePivotX(pageOffset, pivotOffsetRelative)
-
-    transformOrigin = TransformOrigin(tx, CENTER_PIVOT_Y)
-
-    scaleX = scale
-    scaleY = scale
-    rotationZ = rotation
-    alpha = lerp(
-        start = MIN_ALPHA,
-        stop = MAX_ALPHA,
-        fraction = MAX_ALPHA - absOffset
-    )
-
-    applyBlurEffectIfNeeded(blur)
-}
-
-private fun GraphicsLayerScope.applyBlurEffectIfNeeded(blur: Float) {
-    if (blur <= BLUR_THRESHOLD || SDK_INT < VERSION_CODES.S) return
-    try {
-        val adjustedBlur = blur.coerceAtMost(MAX_BLUR_RADIUS)
-        renderEffect = RenderEffect
-            .createBlurEffect(
-                adjustedBlur,
-                adjustedBlur,
-                DECAL
-            )
-            .asComposeRenderEffect()
-    } catch (_: IllegalArgumentException) {
-        /* no-op */
-    } catch (_: IllegalStateException) {
-        /* no-op */
-    }
-}
-
-private fun calculateBlurEffect(pageOffset: Float): Float {
-    return if (pageOffset.absoluteValue > BLUR_START_THRESHOLD) {
-        MAX_BLUR_RADIUS * (
-                pageOffset.absoluteValue - BLUR_START_THRESHOLD
-                ) * BLUR_INTENSITY_MULTIPLIER
-    } else {
-        0f
-    }
-}
-
-private fun calculatePivotX(pageOffset: Float, pivotOffsetRelative: Float): Float {
-    return when {
-        pageOffset < 0f -> lerp(
-            DataSliderDefaults.CENTER_PIVOT_X,
-            DataSliderDefaults.LEFT_EDGE_PIVOT_X - pivotOffsetRelative,
-            (-pageOffset).coerceIn(0f, 1f)
-        )
-
-        pageOffset > 0f -> lerp(
-            DataSliderDefaults.CENTER_PIVOT_X,
-            DataSliderDefaults.RIGHT_EDGE_PIVOT_X + DataSliderDefaults.RIGHT_PIVOT_OFFSET_PERCENT,
-            pageOffset.coerceIn(0f, 1f)
-        )
-
-        else -> DataSliderDefaults.CENTER_PIVOT_X
     }
 }
 
@@ -282,6 +237,62 @@ private fun CaptionText(
     }
 }
 
+private fun GraphicsLayerScope.applyPageTransformation(
+    page: Int,
+    pagerState: PagerState,
+    rotateImage: Boolean,
+    pivotOffsetPx: Float
+) {
+    val rawOffset = pagerState.currentPage - page + pagerState.currentPageOffsetFraction
+    val absOffset = rawOffset.absoluteValue.coerceIn(0f, 1f)
+
+    val scale = lerp(MIN_SCALE, MAX_SCALE, 1f - absOffset)
+    val rotation = if (rotateImage) MAX_ROTATION_DEGREES * (1f - absOffset) else 0f
+    val alphaValue = lerp(MIN_ALPHA, MAX_ALPHA, MAX_ALPHA - absOffset)
+
+    val pivotRelative = pivotOffsetPx / size.width
+    transformOrigin = TransformOrigin(
+        calculatePivotX(rawOffset, pivotRelative),
+        CENTER_PIVOT_Y
+    )
+
+    scaleX = scale
+    scaleY = scale
+    rotationZ = rotation
+    alpha = alphaValue
+
+    val blurRadius = calculateBlurEffect(rawOffset)
+    if (SDK_INT >= VERSION_CODES.S && blurRadius > BLUR_THRESHOLD) {
+        renderEffect = RenderEffect
+            .createBlurEffect(blurRadius, blurRadius, DECAL)
+            .asComposeRenderEffect()
+    }
+}
+
+private fun calculateBlurEffect(offset: Float): Float =
+    if (offset.absoluteValue > BLUR_START_THRESHOLD) {
+        (offset.absoluteValue - BLUR_START_THRESHOLD)
+            .coerceAtMost(1f) *
+                MAX_BLUR_RADIUS *
+                BLUR_INTENSITY_MULTIPLIER
+    } else 0f
+
+private fun calculatePivotX(offset: Float, pivotOffset: Float): Float = when {
+    offset < 0f -> lerp(
+        DataSliderDefaults.CENTER_PIVOT_X,
+        DataSliderDefaults.LEFT_EDGE_PIVOT_X - pivotOffset,
+        (-offset).coerceIn(0f, 1f)
+    )
+
+    offset > 0f -> lerp(
+        DataSliderDefaults.CENTER_PIVOT_X,
+        DataSliderDefaults.RIGHT_EDGE_PIVOT_X + DataSliderDefaults.RIGHT_PIVOT_OFFSET_PERCENT,
+        offset.coerceIn(0f, 1f)
+    )
+
+    else -> DataSliderDefaults.CENTER_PIVOT_X
+}
+
 private data class DataSliderConfig(
     val itemWidth: Dp,
     val horizontalPadding: Dp,
@@ -297,39 +308,44 @@ data class DataPage(
 )
 
 private fun lerp(start: Float, stop: Float, fraction: Float): Float =
-    start + (stop - start) * fraction.coerceIn(0f..1f)
+    start + (stop - start) * fraction.coerceIn(0f, 1f)
 
 private object DataSliderDefaults {
+    /* Layout & padding */
+    const val SPACER_HEIGHT = 8
+    const val BOTTOM_SPACER_HEIGHT = 24
+    const val PAGE_SPACING = 32
+    const val PEEK = 16
+    const val HORIZONTAL_TEXT_PADDING = 32
+    const val PIVOT_OFFSET = 32
 
-    const val SPACER_HEIGHT: Int = 8
-    const val BOTTOM_SPACER_HEIGHT: Int = 24
-    const val PAGE_SPACING: Int = 32
-    const val PEEK: Int = 16
-    const val HORIZONTAL_TEXT_PADDING: Int = 32
-    const val PIVOT_OFFSET: Int = 32
+    /* Caption */
+    const val CAPTION_BOX_HEIGHT = 88
+    const val CAPTION_BOTTOM_PADDING = 16
+    const val INDICATOR_TOP_PADDING = 12
+    const val MAX_CAPTION_LINES = 3
 
-    const val CAPTION_BOX_HEIGHT: Int = 88
-    const val CAPTION_BOTTOM_PADDING: Int = 16
-    const val INDICATOR_TOP_PADDING: Int = 12
-    const val MAX_CAPTION_LINES: Int = 3
+    /* Transform */
+    const val MIN_SCALE = 0.6f
+    const val MAX_SCALE = 0.8f
+    const val MAX_ROTATION_DEGREES = -45f
+    const val MIN_ALPHA = 0.5f
+    const val MAX_ALPHA = 1f
 
-    const val MIN_SCALE: Float = 0.6f
-    const val MAX_SCALE: Float = 0.8f
-    const val MAX_ROTATION_DEGREES: Float = 36f
-    const val MIN_ALPHA: Float = 0.5f
-    const val MAX_ALPHA: Float = 1f
+    /* Pivot */
+    const val CENTER_PIVOT_X = 0.5f
+    const val CENTER_PIVOT_Y = 0.5f
+    const val RIGHT_EDGE_PIVOT_X = 1f
+    const val LEFT_EDGE_PIVOT_X = 0f
+    const val RIGHT_PIVOT_OFFSET_PERCENT = 0.1f
 
-    const val CENTER_PIVOT_X: Float = 0.5f
-    const val CENTER_PIVOT_Y: Float = 0.5f
-    const val RIGHT_EDGE_PIVOT_X: Float = 1f
-    const val LEFT_EDGE_PIVOT_X: Float = 0f
-    const val RIGHT_PIVOT_OFFSET_PERCENT: Float = 0.1f
+    /* Layout specifics */
+    const val CENTRAL_ITEM_WIDTH_FRACTION = 0.75f
+    const val IMAGE_ASPECT_RATIO = 3f / 4f
 
-    const val CENTRAL_ITEM_WIDTH_FRACTION: Float = 0.75f
-    const val IMAGE_ASPECT_RATIO: Float = 3f / 4f
-
-    const val BLUR_START_THRESHOLD: Float = 0.5f
-    const val MAX_BLUR_RADIUS: Float = 12f
-    const val BLUR_THRESHOLD: Float = 0.5f
-    const val BLUR_INTENSITY_MULTIPLIER: Float = 2f
+    /* Blur */
+    const val BLUR_START_THRESHOLD = 0.8f
+    const val MAX_BLUR_RADIUS = 12f
+    const val BLUR_THRESHOLD = 0.5f
+    const val BLUR_INTENSITY_MULTIPLIER = 6f
 }
