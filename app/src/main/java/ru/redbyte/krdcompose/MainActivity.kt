@@ -6,16 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ru.redbyte.krdcompose.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.DataSliderScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
@@ -29,6 +33,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @Composable
     private fun InitNavigation() {
         val navController = rememberNavController()
@@ -38,7 +43,8 @@ class MainActivity : ComponentActivity() {
             startDestination = "mainScreen"
         ) {
             composable("mainScreen") { MainScreen(navController) }
-            composable("dataSliderScreen") { DataSliderScreen(/*navController*/) }
+            composable("dataSliderScreen") { DataSliderScreen() }
+            composable("sapperScreen") { SapperGameScreen() }
         }
     }
 }
@@ -55,6 +61,10 @@ fun MainScreen(navController: NavController) {
             navController.navigate("dataSliderScreen")
         }) {
             Text("Data Slider")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(onClick = { navController.navigate("sapperScreen") }) {
+            Text("Сапер")
         }
     }
 }
