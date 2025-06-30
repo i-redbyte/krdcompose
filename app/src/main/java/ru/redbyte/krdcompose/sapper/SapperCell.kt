@@ -5,7 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.redbyte.krdcompose.R
+import ru.redbyte.krdcompose.sapper.model.Cell
 
 @Composable
 internal fun SapperCell(
@@ -47,15 +48,30 @@ internal fun SapperCell(
         when {
             !cell.isRevealed -> {
                 if (cell.isFlagged) {
-                    Icon(painterResource(R.drawable.ic_flag), contentDescription = "Flag", tint = Color.Yellow)
+                    Icon(
+                        painterResource(R.drawable.ic_flag),
+                        contentDescription = "Flag",
+                        tint = Color.Yellow
+                    )
                 }
             }
+
             cell.isMine -> {
-                Icon(painterResource(R.drawable.ic_mine), contentDescription = "Mine", tint = Color.Black)
+                Icon(
+                    painterResource(R.drawable.ic_mine),
+                    contentDescription = "Mine",
+                    tint = Color.Black
+                )
             }
+
             cell.neighborMines > 0 -> {
-                Text(text = "${cell.neighborMines}", color = textColor, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "${cell.neighborMines}",
+                    color = textColor,
+                    fontWeight = FontWeight.Bold
+                )
             }
+
             else -> {
             }
         }

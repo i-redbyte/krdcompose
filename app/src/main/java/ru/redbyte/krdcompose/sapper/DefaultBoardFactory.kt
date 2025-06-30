@@ -1,5 +1,7 @@
 package ru.redbyte.krdcompose.sapper
 
+import ru.redbyte.krdcompose.sapper.model.Cell
+
 internal class DefaultBoardFactory : BoardFactory {
     override fun createBoard(rows: Int, cols: Int, mines: Int): List<List<Cell>> {
         val cells = List(rows * cols) { i -> Cell(row = i / cols, col = i % cols) }.shuffled()

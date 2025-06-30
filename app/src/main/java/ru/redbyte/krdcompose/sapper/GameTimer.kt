@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import ru.redbyte.krdcompose.sapper.model.Cell
 
 internal class GameTimer(private val scope: CoroutineScope) {
     private var job: Job? = null
@@ -21,21 +22,3 @@ internal class GameTimer(private val scope: CoroutineScope) {
     fun stop() = job?.cancel()
 }
 
-internal interface GameCommand {
-    fun execute()
-}
-
-internal class RevealCellCommand(private val vm: SapperViewModel, private val cell: Cell) : GameCommand {
-    override fun execute() = vm.revealCell(cell)
-}
-
-internal class FlagCellCommand(private val vm: SapperViewModel, private val cell: Cell) : GameCommand {
-    override fun execute() = vm.toggleFlag(cell)
-}
-
-internal sealed interface GameState {
-    object Idle : GameState
-    object Running : GameState
-    object Won : GameState
-    object Lost : GameState
-}

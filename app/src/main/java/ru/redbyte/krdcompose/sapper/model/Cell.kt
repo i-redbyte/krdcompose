@@ -1,4 +1,5 @@
-package ru.redbyte.krdcompose.sapper
+package ru.redbyte.krdcompose.sapper.model
+
 internal data class Cell(
     val row: Int,
     val col: Int,

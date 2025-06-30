@@ -8,6 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ru.redbyte.krdcompose.sapper.model.Cell
+import ru.redbyte.krdcompose.sapper.model.Difficulty
+import ru.redbyte.krdcompose.sapper.model.GameCommand
+import ru.redbyte.krdcompose.sapper.model.GameState
 
 internal class SapperViewModel : ViewModel() {
     var rows: Int = 8
@@ -52,9 +56,9 @@ internal class SapperViewModel : ViewModel() {
     private fun calculateMineCount(rows: Int, cols: Int, difficulty: Difficulty): Int {
         val totalCells = rows * cols
         return when (difficulty) {
-            Difficulty.EASY -> (totalCells * 0.1).toInt()
-            Difficulty.MEDIUM -> (totalCells * 0.15).toInt()
-            Difficulty.HARD -> (totalCells * 0.2).toInt()
+            Difficulty.EASY -> (totalCells * 0.1).toInt() // 10%
+            Difficulty.MEDIUM -> (totalCells * 0.15).toInt() // 15%
+            Difficulty.HARD -> (totalCells * 0.2).toInt() // 20%
         }.coerceAtLeast(1)
     }
 
@@ -98,7 +102,9 @@ internal class SapperViewModel : ViewModel() {
                     val neighbor = board.value[nr][nc]
                     if (!neighbor.isRevealed && !neighbor.isFlagged) {
                         updateCell(neighbor.copy(isRevealed = true))
-                        if (neighbor.neighborMines == 0 && visited.add(nr to nc)) queue.add(neighbor)
+                        if (neighbor.neighborMines == 0 && visited.add(nr to nc)) {
+                            queue.add(neighbor)
+                        }
                     }
                 }
             }

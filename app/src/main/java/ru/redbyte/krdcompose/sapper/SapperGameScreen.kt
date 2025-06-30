@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,6 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.redbyte.krdcompose.sapper.model.Difficulty
+import ru.redbyte.krdcompose.sapper.model.FlagCellCommand
+import ru.redbyte.krdcompose.sapper.model.GameState
+import ru.redbyte.krdcompose.sapper.model.RevealCellCommand
 
 @Composable
 internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
@@ -50,7 +53,10 @@ internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(text = "Время: ${elapsedTime}s", style = MaterialTheme.typography.bodyLarge)
-            Text(text = "Мины: ${minesTotal - flagsPlaced}", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = "Мины: ${minesTotal - flagsPlaced}",
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
 
         Column(
@@ -103,14 +109,26 @@ internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
         Box(modifier = Modifier.weight(1f)) {
             SapperGameBoard(
                 board = boardState,
-                onCellClick = { cell -> viewModel.executeCommand(RevealCellCommand(viewModel, cell)) },
-                onCellLongClick = { cell -> viewModel.executeCommand(FlagCellCommand(viewModel, cell)) }
+                onCellClick = { cell ->
+                    viewModel
+                        .executeCommand(
+                            RevealCellCommand(viewModel, cell)
+                        )
+                },
+                onCellLongClick = { cell ->
+                    viewModel
+                        .executeCommand(
+                            FlagCellCommand(viewModel, cell)
+                        )
+                }
             )
         }
 
         if (gameState is GameState.Won || gameState is GameState.Lost) {
             val statusText = if (gameState is GameState.Won) "Вы победили!" else "Вы проиграли!"
-            val statusColor = if (gameState is GameState.Won) Color(0xFF0F832F) else Color(0xFFFF0000)
+            val statusColor =
+                if (gameState is GameState.Won) Color(0xFF0F832F)
+                else Color(0xFFBB0621)
             Text(
                 text = statusText,
                 style = MaterialTheme.typography.headlineMedium,

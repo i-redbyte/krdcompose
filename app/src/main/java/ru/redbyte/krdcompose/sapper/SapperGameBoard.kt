@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import ru.redbyte.krdcompose.sapper.model.Cell
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
