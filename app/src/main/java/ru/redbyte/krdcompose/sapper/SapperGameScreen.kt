@@ -30,11 +30,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
     val boardState by viewModel.board
-    val time = viewModel.elapsedTime
+    val elapsedTime = viewModel.elapsedTime
     val minesTotal = viewModel.totalMines
-    val flags = viewModel.flagsPlaced
-    val gameOver = viewModel.gameOver
-    val gameWon = viewModel.gameWon
+    val flagsPlaced = viewModel.flagsPlaced
+    val gameState = viewModel.gameState
 
     var chosenDifficulty by remember { mutableStateOf(Difficulty.EASY) }
     var widthInput by remember { mutableStateOf(viewModel.cols.toString()) }
@@ -50,8 +49,8 @@ internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Время: ${time}s", style = MaterialTheme.typography.bodyLarge)
-            Text(text = "Мины: ${minesTotal - flags}", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Время: ${elapsedTime}s", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Мины: ${minesTotal - flagsPlaced}", style = MaterialTheme.typography.bodyLarge)
         }
 
         Column(
@@ -71,7 +70,8 @@ internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Ширина:")
                 TextField(
@@ -99,19 +99,22 @@ internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {
                 }
             }
         }
+
         Box(modifier = Modifier.weight(1f)) {
             SapperGameBoard(
                 board = boardState,
-                onCellClick = { cell -> viewModel.revealCell(cell) },
-                onCellLongClick = { cell -> viewModel.toggleFlag(cell) })
+                onCellClick = { cell -> viewModel.executeCommand(RevealCellCommand(viewModel, cell)) },
+                onCellLongClick = { cell -> viewModel.executeCommand(FlagCellCommand(viewModel, cell)) }
+            )
         }
 
-        if (gameOver || gameWon) {
-            val statusText = if (gameWon) "Вы победили!" else "Вы проиграли!"
+        if (gameState is GameState.Won || gameState is GameState.Lost) {
+            val statusText = if (gameState is GameState.Won) "Вы победили!" else "Вы проиграли!"
+            val statusColor = if (gameState is GameState.Won) Color(0xFF0F832F) else Color(0xFFFF0000)
             Text(
                 text = statusText,
                 style = MaterialTheme.typography.headlineMedium,
-                color = if (gameWon) Color(0xFF0F832F) else Color(0xffff0000),
+                color = statusColor,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(8.dp)
