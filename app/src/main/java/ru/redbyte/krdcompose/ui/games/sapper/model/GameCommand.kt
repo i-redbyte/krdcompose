@@ -1,6 +1,6 @@
-package ru.redbyte.krdcompose.sapper.model
+package ru.redbyte.krdcompose.ui.games.sapper.model
 
-import ru.redbyte.krdcompose.sapper.SapperViewModel
+import ru.redbyte.krdcompose.ui.games.sapper.SapperViewModel
 
 internal interface GameCommand {
     fun execute()

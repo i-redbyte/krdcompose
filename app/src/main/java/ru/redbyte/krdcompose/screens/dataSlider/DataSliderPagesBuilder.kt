@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.screens
+package ru.redbyte.krdcompose.screens.dataSlider
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize

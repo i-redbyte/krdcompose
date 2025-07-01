@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.sapper
+package ru.redbyte.krdcompose.ui.games.sapper
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.redbyte.krdcompose.R
-import ru.redbyte.krdcompose.sapper.model.Cell
+import ru.redbyte.krdcompose.ui.games.sapper.model.Cell
 
 @Composable
 internal fun SapperCell(

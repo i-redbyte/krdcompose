@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.sapper
+package ru.redbyte.krdcompose.ui.games.sapper
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

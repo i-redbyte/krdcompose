@@ -21,8 +21,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ru.redbyte.krdcompose.sapper.SapperGameScreen
-import ru.redbyte.krdcompose.screens.DataSliderScreen
+import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
+import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 class MainActivity : ComponentActivity() {
