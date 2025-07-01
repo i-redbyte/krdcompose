@@ -57,8 +57,8 @@ internal class SapperViewModel : ViewModel() {
         val totalCells = rows * cols
         return when (difficulty) {
             Difficulty.EASY -> (totalCells * 0.1).toInt() // 10%
-            Difficulty.MEDIUM -> (totalCells * 0.15).toInt() // 15%
-            Difficulty.HARD -> (totalCells * 0.2).toInt() // 20%
+            Difficulty.MEDIUM -> (totalCells * 0.25).toInt() // 25%
+            Difficulty.HARD -> (totalCells * 0.35).toInt() // 35%
         }.coerceAtLeast(1)
     }
 

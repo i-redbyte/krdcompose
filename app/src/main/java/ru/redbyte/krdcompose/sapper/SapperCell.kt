@@ -34,7 +34,13 @@ internal fun SapperCell(
         1 -> Color.Blue
         2 -> Color.Green
         3 -> Color.Red
+        4 -> Color.Magenta
+        5 -> Color(0xFF673AB7)
+        6 -> Color.Cyan
+        7 -> Color.Magenta
+        8 -> Color.Gray
         else -> Color.Black
+
     }
 
     Box(
