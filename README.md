@@ -49,6 +49,6 @@ cd krdcompose
 Создайте Pull Request
 
 
-<div style="text-align: center;">
+<p align="center">
   <img src="specification/androidkrd.jpg" alt="Превью Android KRD" width="350"/>
-</div>
+</p>
