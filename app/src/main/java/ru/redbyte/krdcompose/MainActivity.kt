@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
+import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 class MainActivity : ComponentActivity() {
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
             composable("mainScreen") { MainScreen(navController) }
             composable("dataSliderScreen") { DataSliderScreen() }
             composable("sapperScreen") { SapperGameScreen() }
+            composable("pascalTriangleScreen") { PascalTriangleScreen() }
         }
     }
 }
@@ -54,7 +56,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(navController: NavController) {
     Column(
-        modifier = Modifier.padding(16.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -71,6 +75,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("sapperScreen") }) {
             Text("Сапер")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("pascalTriangleScreen") }) {
+            Text("Треугольник Паскаля")
         }
     }
 }

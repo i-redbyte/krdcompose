@@ -24,6 +24,8 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
 
 - **[DataSlider](specification/components/dataslider.md)** — компонент слайдера для удобного
   просмотра данных.
+ 
+- **[PascalTriangle](specification/components/pascaltriangle.md)** — Кастомизируемый треугольник Паскаля.
 
 ## 🎮 Игры
 
