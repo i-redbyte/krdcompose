@@ -25,6 +25,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Компонент для конвертации чисел между системами счисления с визуализацией битов.
+ *
+ * Предоставляет:
+ * - Двустороннюю конвертацию между десятичной и шестнадцатеричной системами
+ * - Валидацию ввода и автоматическое форматирование
+ * - Визуализацию битового представления числа с настраиваемой цветовой схемой
+ * - Адаптивную компоновку (горизонтальную или вертикальную)
+ *
+ * @param modifier Модификатор для корневого контейнера Column
+ * @param maxDigits Максимальное количество шестнадцатеричных цифр в поле ввода (по умолчанию: 16)
+ * @param cornerRadius Скругление углов текстовых полей (по умолчанию: 16.dp)
+ * @param bitColorScheme Цветовая схема для визуализации битов (по умолчанию: [BitColorScheme.GROUP_8])
+ * @param verticalLayout Флаг вертикального расположения полей ввода (по умолчанию: false - горизонтальное)
+ * @param decimalFieldHint Подсказка для десятичного поля ввода (по умолчанию: "десятичное")
+ * @param hexFieldHint Подсказка для шестнадцатеричного поля ввода (по умолчанию: "шестнадцатеричное")
+ * @param icon Иконка между полями ввода (по умолчанию: стрелка Icons.AutoMirrored.Filled.ArrowForward)
+ */
 @Composable
 fun NumberSystemConverter(
     modifier: Modifier = Modifier,
@@ -160,6 +178,13 @@ private fun BaseField(
     )
 }
 
+/**
+ * Визуализатор битового представления числа.
+ *
+ * @param value Число для отображения (64 бита)
+ * @param scheme Цветовая схема для группировки битов
+ * @param modifier Модификатор для компоновки
+ */
 @Composable
 private fun BitRuler(
     value: ULong,
@@ -211,7 +236,7 @@ private fun BitRuler(
             val tickStart = if (isGroupTick) longTickStart else shortTickStart
             val colour = colourFor(i)
 
-            drawLine(colour, Offset(x, tickStart), Offset(x, baseLineY), strokeWidth = 1f)
+            drawLine(colour, Offset(x, tickStart), Offset(x, baseLineY), strokeWidth = 2f)
 
             drawContext.canvas.nativeCanvas.apply {
                 val paintBit = android.graphics.Paint().apply {
@@ -239,5 +264,13 @@ private fun BitRuler(
     }
 }
 
+/**
+ * Цветовые схемы для визуализации битов.
+ *
+ * SINGLE - все биты одного цвета
+ * GROUP_32 - две группы по 32 бита
+ * GROUP_16 - четыре группы по 16 бит
+ * GROUP_8 - восемь групп по 8 бит (по умолчанию)
+ */
 enum class BitColorScheme { SINGLE, GROUP_32, GROUP_16, GROUP_8 }
 private enum class Source { DECIMAL, HEX, NONE }

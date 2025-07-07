@@ -26,6 +26,8 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
   просмотра данных.
  
 - **[PascalTriangle](specification/components/pascaltriangle.md)** — Кастомизируемый треугольник Паскаля.
+- **[NumberSystemConverter](specification/components/numberSystemConverter.md)** — Конвертер систем
+  счисления с визуализацией битов.
 
 ## 🎮 Игры
 
