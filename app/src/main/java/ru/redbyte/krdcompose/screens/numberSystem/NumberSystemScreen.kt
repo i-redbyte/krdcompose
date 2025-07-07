@@ -23,7 +23,7 @@ fun NumberSystemScreen() {
     MaterialTheme {
         Scaffold(
             topBar = {
-                TopAppBar(title = { Text("Decimal ↔ Hex Converter") })
+                TopAppBar(title = { Text("Number System Converter") })
             }
         ) { padding ->
             Column(
@@ -35,8 +35,29 @@ fun NumberSystemScreen() {
             ) {
                 NumberSystemConverter(
                     bitColorScheme = BitColorScheme.GROUP_8,
+                    verticalLayout = true,
                     modifier = Modifier
-                        .padding(24.dp)
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                )
+
+                NumberSystemConverter(
+                    bitColorScheme = BitColorScheme.GROUP_16,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                )
+
+                NumberSystemConverter(
+                    bitColorScheme = BitColorScheme.GROUP_32,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                )
+                NumberSystemConverter(
+                    bitColorScheme = BitColorScheme.SINGLE,
+                    modifier = Modifier
+                        .padding(16.dp)
                         .fillMaxWidth()
                 )
             }
