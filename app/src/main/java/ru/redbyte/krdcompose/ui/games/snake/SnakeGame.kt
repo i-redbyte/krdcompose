@@ -1,5 +1,6 @@
 package ru.redbyte.krdcompose.ui.games.snake
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,17 +29,40 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
+import ru.redbyte.krdcompose.R
+import ru.redbyte.krdcompose.ui.games.snake.RenderMode.*
+import java.util.Random
+import kotlin.math.roundToInt
 
 @Composable
 fun SnakeGame(
     isWrapWalls: Boolean = true,
     livesCount: Int = 3,
+    borderBackgroundColor: Color = Color.Black,
+    menuBackgroundColor: Color = Color(0xFF3F51B5),
+    textColor: Color = Color.White,
+    mode: RenderMode = EMOJI,
+    @DrawableRes headImageRes: Int = R.drawable.ic_snake_head,
+    @DrawableRes foodImageRes: Int = R.drawable.ic_food,
+    @DrawableRes tailImageRes: Int = R.drawable.ic_snake_tail,
+    headColor: Color = Color.Green,
+    foodColor: Color = Color.Red,
+    tailColor: Color = Color.Yellow,
+    emojiHead: String = "\uD83D\uDC0D",                       // 🐍
+    emojiFood: String = "\uD83C\uDF4E",                       // 🍎
+    emojiTail: String = "\uD83C\uDF51",                       // 🍑
 ) {
     var snake by remember { mutableStateOf(listOf(Cell(10, 10))) }
     var direction by remember { mutableStateOf(Direction.RIGHT) }
@@ -52,6 +76,16 @@ fun SnakeGame(
     var canvasHeight by remember { mutableIntStateOf(0) }
     var isGameWon by remember { mutableStateOf(false) }
     var lastDirection by remember { mutableStateOf(Direction.RIGHT) }
+    val context = LocalContext.current
+    val headBitmap = remember(headImageRes) {
+        ImageBitmap.imageResource(context.resources, headImageRes)
+    }
+    val foodBitmap = remember(foodImageRes) {
+        ImageBitmap.imageResource(context.resources, foodImageRes)
+    }
+    val tailBitmap = remember(foodImageRes) {
+        ImageBitmap.imageResource(context.resources, tailImageRes)
+    }
 
     LaunchedEffect(isGameStarted) {
         if (isGameStarted && !isGameWon) {
@@ -68,6 +102,7 @@ fun SnakeGame(
                 if (canvasWidth == 0 || canvasHeight == 0) continue
                 val columns = 20
                 val cellSize = canvasWidth / columns
+                if (cellSize == 0) continue
                 val rows = (canvasHeight / cellSize)
                 val totalCells = (columns * rows) - 1
                 val nextHead = if (wrapWalls) {
@@ -95,7 +130,7 @@ fun SnakeGame(
                         isGameStarted = false
                         continue
                     }
-                    val random = java.util.Random()
+                    val random = Random()
                     var newFood: Cell
                     do {
                         newFood = Cell(random.nextInt(columns), random.nextInt(rows))
@@ -111,7 +146,7 @@ fun SnakeGame(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF3F51B5)),
+            .background(menuBackgroundColor),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -120,14 +155,14 @@ fun SnakeGame(
         ) {
             Text(
                 "Счёт: $score",
-                color = Color.White,
+                color = textColor,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.width(32.dp))
             Text(
                 "Жизни: $lives",
-                color = Color.White,
+                color = textColor,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -135,7 +170,7 @@ fun SnakeGame(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Через стены", color = Color.White)
+                Text("Через стены", color = textColor)
                 Spacer(Modifier.width(8.dp))
                 Switch(checked = wrapWalls, onCheckedChange = { wrapWalls = it })
             }
@@ -144,7 +179,7 @@ fun SnakeGame(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Color.Black)
+                .background(borderBackgroundColor)
                 .onSizeChanged {
                     canvasWidth = it.width
                     canvasHeight = it.height
@@ -172,18 +207,108 @@ fun SnakeGame(
                         }
                     }) {
                 val cellSize = (size.width / 20f)
-                snake.forEach { cell ->
-                    drawRect(
-                        color = Color.Green,
-                        topLeft = Offset(cell.x * cellSize, cell.y * cellSize),
-                        size = Size(cellSize, cellSize)
-                    )
+                val cellSizeInt = cellSize.roundToInt()
+                snake.drop(1).forEach { cell ->
+
+                    when (mode) {
+                        EMOJI -> {
+                            drawContext.canvas.nativeCanvas.apply {
+                                val paint = android.graphics.Paint().apply {
+                                    textSize = cellSize
+                                }
+                                drawText(
+                                    emojiTail,
+                                    cell.x * cellSize,
+                                    cell.y * cellSize + (cellSize / 2 + paint.descent()),
+                                    paint
+                                )
+                            }
+                        }
+
+                        IMAGE -> {
+                            drawImage(
+                                image = tailBitmap,
+                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstOffset = IntOffset(
+                                    cell.x * cellSize.roundToInt(),
+                                    cell.y * cellSize.roundToInt()
+                                )
+                            )
+                        }
+
+                        SHAPE -> {
+                            drawRect(
+                                color = tailColor,
+                                topLeft = Offset(cell.x * cellSize, cell.y * cellSize),
+                                size = Size(cellSize, cellSize)
+                            )
+                        }
+                    }
                 }
-                drawRect(
-                    color = Color.Red,
-                    topLeft = Offset(food.x * cellSize, food.y * cellSize),
-                    size = Size(cellSize, cellSize)
-                )
+                snake.firstOrNull()?.let { head ->
+                    when (mode) {
+                        EMOJI -> {
+                            drawContext.canvas.nativeCanvas.apply {
+                                val paint = android.graphics.Paint().apply {
+                                    textSize = cellSize
+                                }
+                                drawText(
+                                    emojiHead,
+                                    head.x * cellSize,
+                                    (head.y + 1) * cellSize - paint.descent(),
+                                    paint
+                                )
+                            }
+                            food.let { f ->
+                                drawContext.canvas.nativeCanvas.apply {
+                                    val paint = android.graphics.Paint().apply {
+                                        textSize = cellSize
+                                    }
+                                    drawText(
+                                        emojiFood,
+                                        f.x * cellSize,
+                                        (f.y + 1) * cellSize - paint.descent(),
+                                        paint
+                                    )
+                                }
+                            }
+                        }
+
+                        IMAGE -> {
+                            drawImage(
+                                image = headBitmap,
+                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstOffset = IntOffset(
+                                    (head.x * cellSize).roundToInt(),
+                                    (head.y * cellSize).roundToInt()
+                                )
+                            )
+                            drawImage(
+                                image = foodBitmap,
+                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstOffset = IntOffset(
+                                    (food.x * cellSize).roundToInt(),
+                                    (food.y * cellSize).roundToInt()
+                                )
+                            )
+                        }
+
+                        SHAPE -> {
+                            snake.forEachIndexed { i, cell ->
+                                drawRect(
+                                    color = if (i == 0) headColor else tailColor,
+                                    topLeft = Offset(cell.x * cellSize, cell.y * cellSize),
+                                    size = Size(cellSize, cellSize)
+                                )
+                            }
+                            drawRect(
+                                color = foodColor,
+                                topLeft = Offset(food.x * cellSize, food.y * cellSize),
+                                size = Size(cellSize, cellSize)
+                            )
+                        }
+                    }
+                }
             }
         }
         when {
@@ -245,3 +370,5 @@ fun SnakeGame(
 }
 
 enum class Direction { UP, DOWN, LEFT, RIGHT }
+
+enum class RenderMode { IMAGE, EMOJI, SHAPE }
