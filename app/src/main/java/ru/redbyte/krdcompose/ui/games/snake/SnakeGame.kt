@@ -2,333 +2,246 @@ package ru.redbyte.krdcompose.ui.games.snake
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 
-enum class Direction { UP, DOWN, LEFT, RIGHT }
-enum class WallCollisionMode { PASS_THROUGH, DIE }
-
 @Composable
-fun SnakeGame() {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
-    val cellSize = 20.dp
-    val cellSizePx = with(LocalDensity.current) { cellSize.toPx() }
-
-    var score by remember { mutableIntStateOf(0) }
-    var lives by remember { mutableIntStateOf(3) }
-    var isGameOver by remember { mutableStateOf(false) }
-    var isGamePaused by remember { mutableStateOf(false) }
-    var wallCollisionMode by remember { mutableStateOf(WallCollisionMode.PASS_THROUGH) }
-
-    val gridWidth = (screenWidth / cellSize).toInt()
-    val gridHeight = ((screenHeight * 0.8f) / cellSize).toInt()
-
-    var snake by remember {
-        mutableStateOf(
-            listOf(
-                Offset(gridWidth / 2f, gridHeight / 2f),
-                Offset(gridWidth / 2f - 1, gridHeight / 2f),
-                Offset(gridWidth / 2f - 2, gridHeight / 2f)
-            )
-        )
-    }
-
+fun SnakeGame(
+    isWrapWalls: Boolean = true,
+    livesCount: Int = 3,
+) {
+    var snake by remember { mutableStateOf(listOf(Cell(10, 10))) }
     var direction by remember { mutableStateOf(Direction.RIGHT) }
-    var nextDirection by remember { mutableStateOf(Direction.RIGHT) }
+    var food by remember { mutableStateOf(Cell(15, 15)) }
+    var lives by remember { mutableIntStateOf(livesCount) }
+    var score by remember { mutableIntStateOf(0) }
+    var isGameStarted by remember { mutableStateOf(false) }
+    var isGameOver by remember { mutableStateOf(false) }
+    var wrapWalls by remember { mutableStateOf(isWrapWalls) }
+    var canvasWidth by remember { mutableIntStateOf(0) }
+    var canvasHeight by remember { mutableIntStateOf(0) }
+    var isGameWon by remember { mutableStateOf(false) }
+    var lastDirection by remember { mutableStateOf(Direction.RIGHT) }
 
-    var food by remember {
-        mutableStateOf(
-            generateFood(snake, gridWidth, gridHeight)
-        )
-    }
-
-    fun loseLife() {
-        lives--
-        if (lives <= 0) {
-            isGameOver = true
-        } else {
-            snake = listOf(
-                Offset(gridWidth / 2f, gridHeight / 2f),
-                Offset(gridWidth / 2f - 1, gridHeight / 2f),
-                Offset(gridWidth / 2f - 2, gridHeight / 2f)
-            )
-            direction = Direction.RIGHT
-            nextDirection = Direction.RIGHT
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (!isGamePaused && !isGameOver) {
-                delay(150)
-                direction = nextDirection
-                val newHead = calculateNewHead(snake.first(), direction, gridWidth, gridHeight)
-
-                if (wallCollisionMode == WallCollisionMode.DIE &&
-                    (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridWidth || newHead.y >= gridHeight)
-                ) {
-                    loseLife()
-                } else {
-                    val wrappedHead = if (wallCollisionMode == WallCollisionMode.PASS_THROUGH) {
-                        Offset(
-                            (newHead.x + gridWidth) % gridWidth,
-                            (newHead.y + gridHeight) % gridHeight
-                        )
-                    } else newHead
-
-                    if (snake.contains(wrappedHead)) {
-                        loseLife()
+    LaunchedEffect(isGameStarted) {
+        if (isGameStarted && !isGameWon) {
+            while (!isGameOver) {
+                delay(200L)
+                val head = snake.first()
+                val newHead = when (direction) {
+                    Direction.UP -> Cell(head.x, head.y - 1)
+                    Direction.DOWN -> Cell(head.x, head.y + 1)
+                    Direction.LEFT -> Cell(head.x - 1, head.y)
+                    Direction.RIGHT -> Cell(head.x + 1, head.y)
+                }
+                lastDirection = direction
+                if (canvasWidth == 0 || canvasHeight == 0) continue
+                val columns = 20
+                val cellSize = canvasWidth / columns
+                val rows = (canvasHeight / cellSize)
+                val totalCells = (columns * rows) - 1
+                val nextHead = if (wrapWalls) {
+                    Cell((newHead.x + columns) % columns, (newHead.y + rows) % rows)
+                } else newHead
+                val hitWall =
+                    !wrapWalls && (newHead.x < 0 || newHead.y < 0 || newHead.x >= columns || newHead.y >= rows)
+                if (snake.contains(nextHead) || hitWall) {
+                    if (lives > 1) {
+                        lives--
+                        snake = listOf(Cell(10, 10))
+                        direction = Direction.RIGHT
+                        continue
                     } else {
-                        val newSnake = if (wrappedHead == food) {
-                            score++
-                            food = generateFood(snake, gridWidth, gridHeight)
-                            listOf(wrappedHead) + snake
-                        } else {
-                            listOf(wrappedHead) + snake.dropLast(1)
-                        }
-                        snake = newSnake
+                        isGameOver = true
+                        isGameStarted = false
+                        continue
                     }
+                }
+                if (nextHead == food) {
+                    snake = listOf(nextHead) + snake
+                    score++
+                    if (snake.size == totalCells) {
+                        isGameWon = true
+                        isGameStarted = false
+                        continue
+                    }
+                    val random = java.util.Random()
+                    var newFood: Cell
+                    do {
+                        newFood = Cell(random.nextInt(columns), random.nextInt(rows))
+                    } while (snake.contains(newFood))
+                    food = newFood
+                } else {
+                    snake = listOf(nextHead) + snake.dropLast(1)
                 }
             }
         }
     }
 
-    fun resetGame() {
-        score = 0
-        lives = 3
-        isGameOver = false
-        snake = listOf(
-            Offset(gridWidth / 2f, gridHeight / 2f),
-            Offset(gridWidth / 2f - 1, gridHeight / 2f),
-            Offset(gridWidth / 2f - 2, gridHeight / 2f)
-        )
-        direction = Direction.RIGHT
-        nextDirection = Direction.RIGHT
-        food = generateFood(snake, gridWidth, gridHeight)
-    }
-
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .onKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown) {
-                    when (event.key) {
-                        Key.DirectionUp -> if (direction != Direction.DOWN) nextDirection =
-                            Direction.UP
-
-                        Key.DirectionDown -> if (direction != Direction.UP) nextDirection =
-                            Direction.DOWN
-
-                        Key.DirectionLeft -> if (direction != Direction.RIGHT) nextDirection =
-                            Direction.LEFT
-
-                        Key.DirectionRight -> if (direction != Direction.LEFT) nextDirection =
-                            Direction.RIGHT
-
-                        Key.Spacebar -> isGamePaused = !isGamePaused
-                        else -> Unit
-                    }
-                    true
-                } else false
-            }
-            .pointerInput(Unit) { // Добавляем обработку свайпов
-                detectDragGestures { _, dragAmount ->
-                    val (x, y) = dragAmount
-                    when {
-                        abs(x) > abs(y) -> { // Горизонтальный свайп
-                            if (x > 0 && direction != Direction.LEFT) nextDirection =
-                                Direction.RIGHT
-                            else if (x < 0 && direction != Direction.RIGHT) nextDirection =
-                                Direction.LEFT
-                        }
-
-                        else -> { // Вертикальный свайп
-                            if (y > 0 && direction != Direction.UP) nextDirection = Direction.DOWN
-                            else if (y < 0 && direction != Direction.DOWN) nextDirection =
-                                Direction.UP
-                        }
-                    }
-                }
-            }
+            .background(Color(0xFF3F51B5)),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Score: $score",
+                "Счёт: $score",
                 color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
+            Spacer(Modifier.width(32.dp))
             Text(
-                text = "Lives: $lives",
+                "Жизни: $lives",
                 color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Canvas(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Draw food
-                    drawRect(
-                        color = Color.Red,
-                        topLeft = Offset(food.x * cellSizePx, food.y * cellSizePx),
-                        size = Size(cellSizePx, cellSizePx)
-                    )
-
-                    // Draw snake
-                    snake.forEach { segment ->
-                        drawRect(
-                            color = Color.Green,
-                            topLeft = Offset(segment.x * cellSizePx, segment.y * cellSizePx),
-                            size = Size(cellSizePx, cellSizePx)
-                        )
-                    }
-                }
-
-                if (isGameOver) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Game Over!",
-                                color = Color.White,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Button(
-                                onClick = { resetGame() },
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text("Play Again")
-                            }
-                        }
-                    }
-                }
-
-                if (isGamePaused && !isGameOver) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Paused",
-                            color = Color.White,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+                Text("Через стены", color = Color.White)
+                Spacer(Modifier.width(8.dp))
+                Switch(checked = wrapWalls, onCheckedChange = { wrapWalls = it })
             }
-
-            Button(
-                onClick = {
-                    wallCollisionMode = if (wallCollisionMode == WallCollisionMode.PASS_THROUGH) {
-                        WallCollisionMode.DIE
-                    } else {
-                        WallCollisionMode.PASS_THROUGH
-                    }
-                },
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(Color.Black)
+                .onSizeChanged {
+                    canvasWidth = it.width
+                    canvasHeight = it.height
+                }) {
+            Canvas(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "Wall Mode: ${wallCollisionMode.name.replace("_", " ")}",
-                    fontSize = 16.sp
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectDragGestures { _, dragAmount ->
+                            val (dx, dy) = dragAmount
+                            direction = when {
+                                abs(dx) > abs(dy) -> {
+                                    if (dx > 0 && lastDirection != Direction.LEFT) Direction.RIGHT
+                                    else if (dx < 0 && lastDirection != Direction.RIGHT) Direction.LEFT
+                                    else direction
+                                }
+
+                                else -> {
+                                    if (dy > 0 && lastDirection != Direction.UP) Direction.DOWN
+                                    else if (dy < 0 && lastDirection != Direction.DOWN) Direction.UP
+                                    else direction
+                                }
+                            }
+
+                        }
+                    }) {
+                val cellSize = (size.width / 20f)
+                snake.forEach { cell ->
+                    drawRect(
+                        color = Color.Green,
+                        topLeft = Offset(cell.x * cellSize, cell.y * cellSize),
+                        size = Size(cellSize, cellSize)
+                    )
+                }
+                drawRect(
+                    color = Color.Red,
+                    topLeft = Offset(food.x * cellSize, food.y * cellSize),
+                    size = Size(cellSize, cellSize)
                 )
             }
         }
-    }
-}
+        when {
+            isGameOver -> {
+                Text(
+                    "Вы проиграли",
+                    color = Color.Red,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+                Button(
+                    onClick = {
+                        isGameStarted = false
+                        isGameOver = false
+                        isGameWon = false
+                        lives = 3
+                        score = 0
+                        snake = listOf(Cell(10, 10))
+                        direction = Direction.RIGHT
+                        food = Cell(15, 15)
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Начать заново")
+                }
+            }
 
-private fun calculateNewHead(
-    head: Offset,
-    direction: Direction,
-    gridWidth: Int,
-    gridHeight: Int
-): Offset {
-    return when (direction) {
-        Direction.UP -> Offset(head.x, head.y - 1)
-        Direction.DOWN -> Offset(head.x, head.y + 1)
-        Direction.LEFT -> Offset(head.x - 1, head.y)
-        Direction.RIGHT -> Offset(head.x + 1, head.y)
-    }
-}
+            isGameWon -> {
+                Text(
+                    "Вы победили",
+                    color = Color.Green,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+                Button(
+                    onClick = {
+                        isGameStarted = false
+                        isGameOver = false
+                        isGameWon = false
+                        lives = 3
+                        score = 0
+                        snake = listOf(Cell(10, 10))
+                        direction = Direction.RIGHT
+                        food = Cell(15, 15)
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Начать заново")
+                }
+            }
 
-private fun generateFood(snake: List<Offset>, gridWidth: Int, gridHeight: Int): Offset {
-    val availablePositions = mutableListOf<Offset>()
-    for (x in 0 until gridWidth) {
-        for (y in 0 until gridHeight) {
-            val position = Offset(x.toFloat(), y.toFloat())
-            if (!snake.contains(position)) {
-                availablePositions.add(position)
+            !isGameStarted -> {
+                Button(onClick = { isGameStarted = true }, modifier = Modifier.padding(16.dp)) {
+                    Text("Начать")
+                }
             }
         }
     }
-    return availablePositions.random()
 }
+
+enum class Direction { UP, DOWN, LEFT, RIGHT }
