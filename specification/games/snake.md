@@ -37,9 +37,15 @@ SnakeGame(
 Проведите пальцем по экрану, чтобы изменить направление движения змейки.
 
 ## Демонстрация
+<p align="center">
+  <img src="/specification/games/img/snake_classic.webp" alt="classic mode" width="350"/>
+</p>
 
-![Classic](/specification/games/img/snake_classic.webp)
+<p align="center">
+  <img src="/specification/games/img/snake_emoji.webp" alt="emoji mode" width="350"/>
+</p>
 
-![Emoji](/specification/games/img/snake_emoji.webp)
+<p align="center">
+  <img src="/specification/games/img/snake_game.gif" alt="image mode" width="350"/>
+</p>
 
-![Image](/specification/games/img/snake_game.gif)
