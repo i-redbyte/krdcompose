@@ -25,6 +25,7 @@ import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
+import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
             composable("sapperScreen") { SapperGameScreen() }
             composable("pascalTriangleScreen") { PascalTriangleScreen() }
             composable("numberSystemScreen") { NumberSystemScreen() }
+            composable("snakeGameScreen") { SnakeGameScreen() }
         }
     }
 }
@@ -89,6 +91,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("numberSystemScreen") }) {
             Text("Системы счисления")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("snakeGameScreen") }) {
+            Text("Змейка")
         }
     }
 }
