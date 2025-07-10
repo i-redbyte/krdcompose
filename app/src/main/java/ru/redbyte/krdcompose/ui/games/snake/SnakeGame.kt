@@ -46,6 +46,25 @@ import ru.redbyte.krdcompose.ui.games.snake.RenderMode.*
 import java.util.Random
 import kotlin.math.roundToInt
 
+/**
+ * Экран игры "Змейка" на Jetpack Compose.
+ *
+ * @param isWrapWalls Флаг, разрешающий проход сквозь стены (если false — змейка умирает при столкновении).
+ * @param livesCount Количество жизней в начале игры.
+ * @param borderBackgroundColor Цвет фона игрового поля.
+ * @param menuBackgroundColor Цвет фона верхнего меню.
+ * @param textColor Цвет текста (счёт, жизни и т.п.).
+ * @param mode Режим отображения (классический, emoji или изображения).
+ * @param headImageRes Ресурс изображения головы змейки.
+ * @param foodImageRes Ресурс изображения еды.
+ * @param tailImageRes Ресурс изображения хвоста.
+ * @param headColor Цвет головы змейки (в классическом режиме).
+ * @param foodColor Цвет еды (в классическом режиме).
+ * @param tailColor Цвет хвоста змейки (в классическом режиме).
+ * @param emojiHead Символ emoji головы змейки.
+ * @param emojiFood Символ emoji еды.
+ * @param emojiTail Символ emoji хвоста.
+ */
 @Composable
 fun SnakeGame(
     isWrapWalls: Boolean = true,
@@ -64,9 +83,17 @@ fun SnakeGame(
     emojiFood: String = "\uD83C\uDF4E",                       // 🍎
     emojiTail: String = "\uD83C\uDF51",                       // 🍑
 ) {
-    var snake by remember { mutableStateOf(listOf(Cell(10, 10))) }
+    val columns = if (mode == IMAGE) 10 else 20
+    var snake by remember { mutableStateOf(listOf(Cell(0, columns - (columns / 5)))) }
     var direction by remember { mutableStateOf(Direction.RIGHT) }
-    var food by remember { mutableStateOf(Cell(15, 15)) }
+    var food by remember {
+        mutableStateOf(
+            Cell(
+                Random().nextInt(columns),
+                Random().nextInt(columns)
+            )
+        )
+    }
     var lives by remember { mutableIntStateOf(livesCount) }
     var score by remember { mutableIntStateOf(0) }
     var isGameStarted by remember { mutableStateOf(false) }
@@ -100,7 +127,6 @@ fun SnakeGame(
                 }
                 lastDirection = direction
                 if (canvasWidth == 0 || canvasHeight == 0) continue
-                val columns = 20
                 val cellSize = canvasWidth / columns
                 if (cellSize == 0) continue
                 val rows = (canvasHeight / cellSize)
@@ -113,7 +139,7 @@ fun SnakeGame(
                 if (snake.contains(nextHead) || hitWall) {
                     if (lives > 1) {
                         lives--
-                        snake = listOf(Cell(10, 10))
+                        snake = listOf(Cell(0, columns - (columns / 5)))
                         direction = Direction.RIGHT
                         continue
                     } else {
@@ -133,7 +159,10 @@ fun SnakeGame(
                     val random = Random()
                     var newFood: Cell
                     do {
-                        newFood = Cell(random.nextInt(columns), random.nextInt(rows))
+                        newFood = Cell(
+                            random.nextInt(columns),
+                            random.nextInt(rows)
+                        )
                     } while (snake.contains(newFood))
                     food = newFood
                 } else {
@@ -206,7 +235,7 @@ fun SnakeGame(
 
                         }
                     }) {
-                val cellSize = (size.width / 20f)
+                val cellSize = (size.width / columns)
                 val cellSizeInt = cellSize.roundToInt()
                 snake.drop(1).forEach { cell ->
 
@@ -228,15 +257,18 @@ fun SnakeGame(
                         IMAGE -> {
                             drawImage(
                                 image = tailBitmap,
-                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstSize = IntSize(
+                                    (cellSizeInt * 1.5).roundToInt(),
+                                    (cellSizeInt * 1.5).roundToInt()
+                                ),
                                 dstOffset = IntOffset(
-                                    cell.x * cellSize.roundToInt(),
-                                    cell.y * cellSize.roundToInt()
+                                    cell.x * cellSize.roundToInt() + (cellSize.roundToInt() / 10),
+                                    cell.y * cellSize.roundToInt() + (cellSize.roundToInt() / 10)
                                 )
                             )
                         }
 
-                        SHAPE -> {
+                        CLASSIC -> {
                             drawRect(
                                 color = tailColor,
                                 topLeft = Offset(cell.x * cellSize, cell.y * cellSize),
@@ -277,7 +309,10 @@ fun SnakeGame(
                         IMAGE -> {
                             drawImage(
                                 image = headBitmap,
-                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstSize = IntSize(
+                                    (cellSizeInt * 1.5).roundToInt(),
+                                    (cellSizeInt * 1.5).roundToInt()
+                                ),
                                 dstOffset = IntOffset(
                                     (head.x * cellSize).roundToInt(),
                                     (head.y * cellSize).roundToInt()
@@ -285,7 +320,10 @@ fun SnakeGame(
                             )
                             drawImage(
                                 image = foodBitmap,
-                                dstSize = IntSize(cellSizeInt, cellSizeInt),
+                                dstSize = IntSize(
+                                    (cellSizeInt * 1.5).roundToInt(),
+                                    (cellSizeInt * 1.5).roundToInt()
+                                ),
                                 dstOffset = IntOffset(
                                     (food.x * cellSize).roundToInt(),
                                     (food.y * cellSize).roundToInt()
@@ -293,7 +331,7 @@ fun SnakeGame(
                             )
                         }
 
-                        SHAPE -> {
+                        CLASSIC -> {
                             snake.forEachIndexed { i, cell ->
                                 drawRect(
                                     color = if (i == 0) headColor else tailColor,
@@ -324,11 +362,14 @@ fun SnakeGame(
                         isGameStarted = false
                         isGameOver = false
                         isGameWon = false
-                        lives = 3
+                        lives = livesCount
                         score = 0
-                        snake = listOf(Cell(10, 10))
+                        snake = listOf(Cell(0, columns - (columns / 5)))
                         direction = Direction.RIGHT
-                        food = Cell(15, 15)
+                        food = Cell(
+                            Random().nextInt(columns),
+                            Random().nextInt(columns)
+                        )
                     },
                     modifier = Modifier.padding(16.dp)
                 ) {
@@ -348,11 +389,14 @@ fun SnakeGame(
                         isGameStarted = false
                         isGameOver = false
                         isGameWon = false
-                        lives = 3
+                        lives = livesCount
                         score = 0
-                        snake = listOf(Cell(10, 10))
+                        snake = listOf(Cell(0, columns - (columns / 5)))
                         direction = Direction.RIGHT
-                        food = Cell(15, 15)
+                        food = Cell(
+                            Random().nextInt(columns),
+                            Random().nextInt(columns)
+                        )
                     },
                     modifier = Modifier.padding(16.dp)
                 ) {
@@ -361,7 +405,10 @@ fun SnakeGame(
             }
 
             !isGameStarted -> {
-                Button(onClick = { isGameStarted = true }, modifier = Modifier.padding(16.dp)) {
+                Button(
+                    onClick = { isGameStarted = true },
+                    modifier = Modifier.padding(16.dp)
+                ) {
                     Text("Начать")
                 }
             }
@@ -369,6 +416,15 @@ fun SnakeGame(
     }
 }
 
+/**
+ * Направления движения змейки.
+ */
 enum class Direction { UP, DOWN, LEFT, RIGHT }
 
-enum class RenderMode { IMAGE, EMOJI, SHAPE }
+/**
+ * Режимы визуализации змейки и еды:
+ * - IMAGE: использует изображения.
+ * - EMOJI: использует emoji-символы.
+ * - CLASSIC: рисует простые цветные прямоугольники.
+ */
+enum class RenderMode { IMAGE, EMOJI, CLASSIC }
