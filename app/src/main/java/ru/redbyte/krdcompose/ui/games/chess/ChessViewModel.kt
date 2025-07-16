@@ -13,6 +13,7 @@ import ru.redbyte.krdcompose.ui.games.chess.model.Piece
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.BLACK
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.WHITE
+import ru.redbyte.krdcompose.ui.games.chess.model.PieceType
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceType.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -75,6 +76,20 @@ class ChessViewModel() : ViewModel() {
                 _state.value = st.copy(selected = Pair(row, col))
             }
         } else {
+            val selPiece = st.board[sel.first][sel.second]
+            if (
+                selPiece?.type == KING &&
+                piece?.type == ROOK &&
+                piece.color == selPiece.color
+            ) {
+                val toCol = if (col == 7) 6 else 2
+                val m = legalMovesForPiece(sel.first, sel.second, st)
+                    .firstOrNull { it.isCastling && it.toCol == toCol }
+                if (m != null) {
+                    makeMove(m)
+                    return
+                }
+            }
             val candidate = legalMovesForPiece(sel.first, sel.second, st)
                 .firstOrNull { it.toRow == row && it.toCol == col }
             if (candidate != null) makeMove(candidate)
