@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
             composable("pascalTriangleScreen") { PascalTriangleScreen() }
             composable("numberSystemScreen") { NumberSystemScreen() }
             composable("snakeGameScreen") { SnakeGameScreen() }
+            composable("chessScreen") { ChessScreen() }
         }
     }
 }
@@ -97,6 +99,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("snakeGameScreen") }) {
             Text("Змейка")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("chessScreen") }) {
+            Text("Шахматы")
         }
     }
 }
