@@ -13,12 +13,22 @@ import ru.redbyte.krdcompose.ui.games.chess.model.Piece
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.BLACK
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.WHITE
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceType
 import ru.redbyte.krdcompose.ui.games.chess.model.PieceType.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.random.Random
 
+/**
+ * ViewModel для управления состоянием шахматной игры.
+ *
+ * Обрабатывает:
+ * - Нажатия на клетки доски
+ * - Логику ходов и их валидацию
+ * - Специальные правила (рокировка, взятие на проходе, превращение пешки)
+ * - Состояния игры (шах, мат, пат)
+ * - Отмену ходов
+ * - Сброс игры
+ */
 class ChessViewModel() : ViewModel() {
 
     private fun deepCopyBoard(src: Array<Array<Piece?>>) =

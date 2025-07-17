@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -60,7 +61,22 @@ fun ChessScreen(viewModel: ChessViewModel = viewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Шахматы", fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Шахматы", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = if (state.currentTurn == WHITE) "Ход: Белых" else "Ход: Чёрных",
+                            color = if (state.currentTurn == WHITE) Color.White else Color.Black,
+                            modifier = Modifier
+                                .background(
+                                    color = if (state.currentTurn == WHITE) Color.DarkGray else Color.LightGray,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.undo() }) {
                         Icon(
