@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.sapper
+package ru.redbyte.krdcompose.games.sapper
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import ru.redbyte.krdcompose.ui.games.sapper.model.Difficulty
+import ru.redbyte.krdcompose.games.sapper.model.Difficulty
 
 @Composable
 internal fun DifficultyDropdown(

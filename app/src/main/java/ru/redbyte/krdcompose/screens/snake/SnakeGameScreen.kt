@@ -7,8 +7,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import ru.redbyte.krdcompose.ui.games.snake.RenderMode
-import ru.redbyte.krdcompose.ui.games.snake.SnakeGame
+import ru.redbyte.krdcompose.games.snake.RenderMode
+import ru.redbyte.krdcompose.games.snake.SnakeGame
 
 @Composable
 fun SnakeGameScreen() {

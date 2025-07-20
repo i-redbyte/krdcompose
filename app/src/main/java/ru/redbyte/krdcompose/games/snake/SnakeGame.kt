@@ -1,5 +1,6 @@
-package ru.redbyte.krdcompose.ui.games.snake
+package ru.redbyte.krdcompose.games.snake
 
+import android.graphics.Paint
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -42,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import ru.redbyte.krdcompose.R
-import ru.redbyte.krdcompose.ui.games.snake.RenderMode.*
+import ru.redbyte.krdcompose.games.snake.RenderMode.*
 import java.util.Random
 import kotlin.math.roundToInt
 
@@ -242,7 +243,7 @@ fun SnakeGame(
                     when (mode) {
                         EMOJI -> {
                             drawContext.canvas.nativeCanvas.apply {
-                                val paint = android.graphics.Paint().apply {
+                                val paint = Paint().apply {
                                     textSize = cellSize
                                 }
                                 drawText(
@@ -281,7 +282,7 @@ fun SnakeGame(
                     when (mode) {
                         EMOJI -> {
                             drawContext.canvas.nativeCanvas.apply {
-                                val paint = android.graphics.Paint().apply {
+                                val paint = Paint().apply {
                                     textSize = cellSize
                                 }
                                 drawText(
@@ -293,7 +294,7 @@ fun SnakeGame(
                             }
                             food.let { f ->
                                 drawContext.canvas.nativeCanvas.apply {
-                                    val paint = android.graphics.Paint().apply {
+                                    val paint = Paint().apply {
                                         textSize = cellSize
                                     }
                                     drawText(

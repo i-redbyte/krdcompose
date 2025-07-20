@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.chess.model
+package ru.redbyte.krdcompose.games.chess.model
 
 data class Move(
     val fromRow: Int,

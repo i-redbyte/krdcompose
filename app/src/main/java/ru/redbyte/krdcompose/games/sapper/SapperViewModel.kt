@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.sapper
+package ru.redbyte.krdcompose.games.sapper
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -8,10 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ru.redbyte.krdcompose.ui.games.sapper.model.Cell
-import ru.redbyte.krdcompose.ui.games.sapper.model.Difficulty
-import ru.redbyte.krdcompose.ui.games.sapper.model.GameCommand
-import ru.redbyte.krdcompose.ui.games.sapper.model.GameState
+import ru.redbyte.krdcompose.games.sapper.model.Cell
+import ru.redbyte.krdcompose.games.sapper.model.Difficulty
+import ru.redbyte.krdcompose.games.sapper.model.GameCommand
+import ru.redbyte.krdcompose.games.sapper.model.GameState
 
 internal class SapperViewModel : ViewModel() {
     var rows: Int = 8

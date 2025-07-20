@@ -1,12 +1,12 @@
-package ru.redbyte.krdcompose.ui.games.chess
+package ru.redbyte.krdcompose.games.chess
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import ru.redbyte.krdcompose.ui.games.chess.model.GameStatus
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceType
+import ru.redbyte.krdcompose.games.chess.model.GameStatus
+import ru.redbyte.krdcompose.games.chess.model.PieceColor
+import ru.redbyte.krdcompose.games.chess.model.PieceType
 
 @RunWith(AndroidJUnit4::class)
 class ChessViewModelTest {

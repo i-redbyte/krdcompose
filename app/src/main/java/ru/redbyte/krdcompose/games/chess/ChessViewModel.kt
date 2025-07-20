@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.chess
+package ru.redbyte.krdcompose.games.chess
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -6,14 +6,14 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import ru.redbyte.krdcompose.ui.games.chess.model.GameState
-import ru.redbyte.krdcompose.ui.games.chess.model.GameStatus
-import ru.redbyte.krdcompose.ui.games.chess.model.Move
-import ru.redbyte.krdcompose.ui.games.chess.model.Piece
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.BLACK
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.WHITE
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceType.*
+import ru.redbyte.krdcompose.games.chess.model.GameState
+import ru.redbyte.krdcompose.games.chess.model.GameStatus
+import ru.redbyte.krdcompose.games.chess.model.Move
+import ru.redbyte.krdcompose.games.chess.model.Piece
+import ru.redbyte.krdcompose.games.chess.model.PieceColor
+import ru.redbyte.krdcompose.games.chess.model.PieceColor.BLACK
+import ru.redbyte.krdcompose.games.chess.model.PieceColor.WHITE
+import ru.redbyte.krdcompose.games.chess.model.PieceType.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.random.Random

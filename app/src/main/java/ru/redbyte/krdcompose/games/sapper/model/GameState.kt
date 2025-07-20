@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.sapper.model
+package ru.redbyte.krdcompose.games.sapper.model
 
 internal sealed interface GameState {
     object Idle : GameState

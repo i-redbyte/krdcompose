@@ -26,13 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ru.redbyte.krdcompose.ui.games.sapper.DifficultyDropdown
-import ru.redbyte.krdcompose.ui.games.sapper.SapperGameBoard
-import ru.redbyte.krdcompose.ui.games.sapper.SapperViewModel
-import ru.redbyte.krdcompose.ui.games.sapper.model.Difficulty
-import ru.redbyte.krdcompose.ui.games.sapper.model.FlagCellCommand
-import ru.redbyte.krdcompose.ui.games.sapper.model.GameState
-import ru.redbyte.krdcompose.ui.games.sapper.model.RevealCellCommand
+import ru.redbyte.krdcompose.games.sapper.DifficultyDropdown
+import ru.redbyte.krdcompose.games.sapper.SapperGameBoard
+import ru.redbyte.krdcompose.games.sapper.SapperViewModel
+import ru.redbyte.krdcompose.games.sapper.model.Difficulty
+import ru.redbyte.krdcompose.games.sapper.model.FlagCellCommand
+import ru.redbyte.krdcompose.games.sapper.model.GameState
+import ru.redbyte.krdcompose.games.sapper.model.RevealCellCommand
 
 @Composable
 internal fun SapperGameScreen(viewModel: SapperViewModel = viewModel()) {

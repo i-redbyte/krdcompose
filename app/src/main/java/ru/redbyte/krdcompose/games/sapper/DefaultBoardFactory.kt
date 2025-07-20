@@ -1,6 +1,6 @@
-package ru.redbyte.krdcompose.ui.games.sapper
+package ru.redbyte.krdcompose.games.sapper
 
-import ru.redbyte.krdcompose.ui.games.sapper.model.Cell
+import ru.redbyte.krdcompose.games.sapper.model.Cell
 
 internal class DefaultBoardFactory : BoardFactory {
     override fun createBoard(rows: Int, cols: Int, mines: Int): List<List<Cell>> {

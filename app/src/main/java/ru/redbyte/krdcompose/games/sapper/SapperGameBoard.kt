@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.ui.games.sapper
+package ru.redbyte.krdcompose.games.sapper
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import ru.redbyte.krdcompose.ui.games.sapper.model.Cell
+import ru.redbyte.krdcompose.games.sapper.model.Cell
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable

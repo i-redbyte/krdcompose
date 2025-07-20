@@ -44,13 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.redbyte.krdcompose.R
-import ru.redbyte.krdcompose.ui.games.chess.ChessViewModel
-import ru.redbyte.krdcompose.ui.games.chess.model.GameState
-import ru.redbyte.krdcompose.ui.games.chess.model.GameStatus.*
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.BLACK
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceColor.WHITE
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceType
-import ru.redbyte.krdcompose.ui.games.chess.model.PieceType.KING
+import ru.redbyte.krdcompose.games.chess.ChessViewModel
+import ru.redbyte.krdcompose.games.chess.model.GameState
+import ru.redbyte.krdcompose.games.chess.model.GameStatus.*
+import ru.redbyte.krdcompose.games.chess.model.PieceColor.BLACK
+import ru.redbyte.krdcompose.games.chess.model.PieceColor.WHITE
+import ru.redbyte.krdcompose.games.chess.model.PieceType
+import ru.redbyte.krdcompose.games.chess.model.PieceType.KING
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)

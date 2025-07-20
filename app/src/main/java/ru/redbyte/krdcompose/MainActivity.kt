@@ -1,9 +1,11 @@
 package ru.redbyte.krdcompose
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +31,7 @@ import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +42,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
     @Composable
     private fun InitNavigation() {
