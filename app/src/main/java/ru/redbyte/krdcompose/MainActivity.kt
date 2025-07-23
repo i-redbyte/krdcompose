@@ -29,6 +29,7 @@ import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
+import ru.redbyte.krdcompose.screens.wheel.WheelScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
             composable("numberSystemScreen") { NumberSystemScreen() }
             composable("snakeGameScreen") { SnakeGameScreen() }
             composable("chessScreen") { ChessScreen() }
+            composable("wheelScreen") { WheelScreen() }
         }
     }
 }
@@ -109,6 +111,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("chessScreen") }) {
             Text("Шахматы")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("wheelScreen") }) {
+            Text("Колесо фортуны")
         }
     }
 }
