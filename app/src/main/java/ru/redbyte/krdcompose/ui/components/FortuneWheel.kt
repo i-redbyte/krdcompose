@@ -51,7 +51,6 @@ val easingMap: LinkedHashMap<String, (Float) -> Float> = linkedMapOf(
             }
         }
     },
-
     "Bounce‑out" to { t ->
         val n1 = 7.5625f;
         val d1 = 2.75f
@@ -72,68 +71,49 @@ val easingMap: LinkedHashMap<String, (Float) -> Float> = linkedMapOf(
     },
     "Linear" to { t -> t },
     "Quart‑out" to { t -> 1f - (1f - t).pow(4) },
-
     "Sine‑inOut" to { t -> (-(cos(PI.toFloat() * t) - 1f) / 2f) },
-
-    "Quad‑inOut" to { t ->
-        if (t < 0.5f) 2f * t * t
-        else 1f - (-2f * t + 2f).pow(2) / 2f
-    },
-
+    "Quad‑inOut" to { t -> if (t < 0.5f) 2f * t * t else 1f - (-2f * t + 2f).pow(2) / 2f },
     "Expo‑inOut" to { t ->
         when (t) {
             0f -> 0f
             1f -> 1f
-            else -> if (t < 0.5f)
-                2f.pow(20f * t - 10f) / 2f
-            else
-                (2f - 2f.pow(-20f * t + 10f)) / 2f
+            else -> if (t < 0.5f) 2f.pow(20f * t - 10f) / 2f
+            else (2f - 2f.pow(-20f * t + 10f)) / 2f
         }
     },
-
     "Bounce‑inOut" to { t ->
         val bounceOut = easingMap["Bounce‑out"]!!
-        if (t < 0.5f)
-            (1f - bounceOut(1f - 2f * t)) / 2f
-        else
-            (1f + bounceOut(2f * t - 1f)) / 2f
+        if (t < 0.5f) (1f - bounceOut(1f - 2f * t)) / 2f else (1f + bounceOut(2f * t - 1f)) / 2f
     },
     "Quart‑in" to { t -> t.pow(4) },
-
-    "Quint‑inOut" to { t ->
-        if (t < 0.5f) 16f * t.pow(5)
-        else 1f - (-2f * t + 2f).pow(5) / 2f
-    },
-
+    "Quint‑inOut" to { t -> if (t < 0.5f) 16f * t.pow(5) else 1f - (-2f * t + 2f).pow(5) / 2f },
     "Circ‑inOut" to { t ->
-        if (t < 0.5f) (1f - sqrt(1f - (2f * t).pow(2))) / 2f
-        else (sqrt(1f - (-2f * t + 2f).pow(2)) + 1f) / 2f
+        if (t < 0.5f) (1f - sqrt(1f - (2f * t).pow(2))) / 2f else (sqrt(
+            1f - (-2f * t + 2f).pow(
+                2
+            )
+        ) + 1f) / 2f
     },
-
     "Back‑inOut" to { t ->
-        val c1 = 1.70158f
+        val c1 = 1.70158f;
         val c2 = c1 * 1.525f
         if (t < 0.5f) ((2f * t).pow(2) * ((c2 + 1f) * 2f * t - c2)) / 2f
         else ((2f * t - 2f).pow(2) * ((c2 + 1f) * (t * 2f - 2f) + c2) + 2f) / 2f
     },
-
     "Elastic‑inOut" to { t ->
         when (t) {
             0f -> 0f
             1f -> 1f
             else -> {
-                val c = (2f * PI).toFloat()
+                val c = (2f * PI).toFloat();
                 val p = 0.45f
                 if (t < 0.5f)
-                    ((-2f).pow(20f * t - 10f) *
-                            sin((20f * t - 11.125f) * c / p)) / 2f
+                    ((-2f).pow(20f * t - 10f) * sin((20f * t - 11.125f) * c / p)) / 2f
                 else
-                    (2f.pow(-20f * t + 10f) *
-                            sin((20f * t - 11.125f) * c / p)) / 2f + 1f
+                    (2f.pow(-20f * t + 10f) * sin((20f * t - 11.125f) * c / p)) / 2f + 1f
             }
         }
     }
-
 )
 
 @Composable
@@ -145,6 +125,7 @@ fun FortuneWheel(
     evenTextColor: Color? = null,
     oddTextColor: Color? = null,
     easing: (Float) -> Float,
+    forcedWinnerIndex: Int? = null,
     onItemSelected: (WheelItem) -> Unit
 ) {
     require(items.size >= 2)
@@ -159,7 +140,9 @@ fun FortuneWheel(
     fun startSpin() {
         if (isSpinning) return
         val seg = 360f / items.size
-        val chosen = items.indices.random()
+        val chosen = forcedWinnerIndex
+            ?.takeIf { it in items.indices }
+            ?: items.indices.random()
         val fullRot = (3..5).random()
         val duration = (3000..6000).random()
         startAngle = currentAngle
