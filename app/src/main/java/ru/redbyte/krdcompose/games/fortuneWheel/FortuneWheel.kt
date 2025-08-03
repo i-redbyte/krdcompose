@@ -1,5 +1,6 @@
-package ru.redbyte.krdcompose.ui.components
+package ru.redbyte.krdcompose.games.fortuneWheel
 
+import android.graphics.Paint
 import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
@@ -256,9 +257,9 @@ fun FortuneWheel(
             val r = min(size.width, size.height) / 2
             val seg = 360f / items.size
             val startOff = 90f - seg / 2
-            val textPaint = android.graphics.Paint().apply {
+            val textPaint = Paint().apply {
                 isAntiAlias = true
-                textAlign = android.graphics.Paint.Align.CENTER
+                textAlign = Paint.Align.CENTER
                 textSize = r * 0.1f
             }
             repeat(items.size) { i ->

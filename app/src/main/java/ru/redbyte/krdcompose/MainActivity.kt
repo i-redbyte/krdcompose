@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
+import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
             composable("snakeGameScreen") { SnakeGameScreen() }
             composable("chessScreen") { ChessScreen() }
             composable("wheelScreen") { WheelScreen() }
+            composable("hanoiGameScreen") { HanoiGameScreen() }
         }
     }
 }
@@ -117,6 +119,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("wheelScreen") }) {
             Text("Колесо фортуны")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("hanoiGameScreen") }) {
+            Text("Ханойские башни")
         }
     }
 }

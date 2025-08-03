@@ -24,9 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import ru.redbyte.krdcompose.ui.components.FortuneWheel
-import ru.redbyte.krdcompose.ui.components.WheelItem
-import ru.redbyte.krdcompose.ui.components.easingMap
+import ru.redbyte.krdcompose.games.fortuneWheel.FortuneWheel
+import ru.redbyte.krdcompose.games.fortuneWheel.WheelItem
+import ru.redbyte.krdcompose.games.fortuneWheel.easingMap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
