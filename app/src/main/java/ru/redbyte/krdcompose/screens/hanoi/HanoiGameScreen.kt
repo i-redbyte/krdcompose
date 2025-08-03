@@ -21,13 +21,18 @@ fun HanoiGameScreen() {
         ) {
             TowerOfHanoiGame(
                 rods = 3,
-                rings = 5,
+                rings = 6,
                 ringColors = listOf(
                     Color(0xFFE57373),
                     Color(0xFF64B5F6),
                     Color(0xFFFFF176),
                     Color(0xFF81C784),
-                    Color(0xFF673AB7)
+                    Color(0xFF673AB7),
+                    Color(0xFF009688),
+                    Color(0xFFEB04F3),
+                    Color(0xFFA40431),
+                    Color(0xFF002342),
+                    Color(0xFF050000),
                 ),
                 onVictory = { moves ->
                     Toast

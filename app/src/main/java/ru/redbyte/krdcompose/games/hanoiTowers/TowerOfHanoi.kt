@@ -30,6 +30,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -47,6 +48,7 @@ fun TowerOfHanoiGame(
     var selectedRod by remember { mutableStateOf<Int?>(null) }
     val animRing = remember { mutableStateOf<AnimatedRing?>(null) }
     val scope = rememberCoroutineScope()
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val density = LocalDensity.current
         val ringHeight = 24.dp
@@ -60,6 +62,7 @@ fun TowerOfHanoiGame(
         val maxHeightPx = with(density) { maxHeight.toPx() }
         val verticalOffsetPx = ((maxHeightPx - towerAreaHeightPx) / 2f)
             .coerceAtLeast(0f)
+
         Column(
             Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -70,14 +73,14 @@ fun TowerOfHanoiGame(
                     .fillMaxWidth()
                     .height(towerAreaHeight)
                     .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement
-                    .spacedBy(
-                        space = 16.dp,
-                        Alignment.CenterHorizontally
-                    )
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 16.dp,
+                    Alignment.CenterHorizontally
+                )
             ) {
                 repeat(rods) { index ->
                     val tower = game.towers[index]
+
                     Box(
                         Modifier
                             .weight(1f)
@@ -92,17 +95,26 @@ fun TowerOfHanoiGame(
                                         selectedRod = null; return@clickable
                                     }
                                     if (game.canMove(from, to)) {
+                                        val startTowerSize = game.towers[from].size
+                                        val endTowerSizeBeforeMove = game.towers[to].size
                                         val ring = game.popRing(from)
                                         val fraction =
                                             if (rings == 1) 1f
                                             else 0.3f + (ring - 1f) / (rings - 1) * 0.7f
                                         val startX = widthPerRodPx * (from + 0.5f)
-                                        val startY =
-                                            verticalOffsetPx + towerAreaHeightPx - (ringHeightPx + spacingPx) * (tower.size + 1) + ringHeightPx / 2f
+                                        val startY = verticalOffsetPx +
+                                                towerAreaHeightPx -
+                                                (ringHeightPx + spacingPx) * startTowerSize +
+                                                ringHeightPx / 2f
+
                                         val endX = widthPerRodPx * (to + 0.5f)
-                                        val endY =
-                                            verticalOffsetPx + towerAreaHeightPx - (ringHeightPx + spacingPx) * (game.towers[to].size + 1) + ringHeightPx / 2f
-                                        val liftY = startY - ringHeightPx * 4
+                                        val endY = verticalOffsetPx +
+                                                towerAreaHeightPx -
+                                                (ringHeightPx + spacingPx) * (endTowerSizeBeforeMove + 1) +
+                                                ringHeightPx / 2f
+                                        val liftY =
+                                            (verticalOffsetPx + towerAreaHeightPx - stackHeightPx) - ringHeightPx * 2
+
                                         val anim = Animatable(
                                             Offset(startX, startY),
                                             Offset.VectorConverter
@@ -115,34 +127,38 @@ fun TowerOfHanoiGame(
                                             widthPerRodPx * fraction,
                                             ringHeightPx
                                         )
+
                                         scope.launch {
                                             anim.animateTo(
                                                 Offset(startX, liftY),
                                                 tween(
-                                                    200,
+                                                    durationMillis = 200,
                                                     easing = LinearEasing
                                                 )
                                             )
                                             anim.animateTo(
                                                 Offset(endX, liftY),
                                                 tween(
-                                                    400,
+                                                    durationMillis = 400,
                                                     easing = LinearEasing
                                                 )
                                             )
                                             anim.animateTo(
                                                 Offset(endX, endY),
                                                 tween(
-                                                    200,
+                                                    durationMillis = 200,
                                                     easing = LinearEasing
                                                 )
                                             )
+
                                             game.pushRing(to, ring)
                                             animRing.value = null
                                             selectedRod = null
                                             if (game.isVictory()) onVictory(game.moves)
                                         }
-                                    } else selectedRod = null
+                                    } else {
+                                        selectedRod = null
+                                    }
                                 }
                             }
                     ) {
@@ -152,20 +168,17 @@ fun TowerOfHanoiGame(
                             verticalArrangement = Arrangement.Bottom,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            tower
-                                .asReversed()
-                                .forEachIndexed { i, ring ->
-                                    RingView(ring, rings, ringColors, ringHeight)
-                                    if (i != tower.lastIndex) {
-                                        Spacer(Modifier.height(ringSpacing))
-                                    }
+                            tower.asReversed().forEachIndexed { i, ring ->
+                                RingView(ring, rings, ringColors, ringHeight)
+                                if (i != tower.lastIndex) {
+                                    Spacer(Modifier.height(ringSpacing))
                                 }
+                            }
                         }
                     }
                 }
             }
         }
-
         animRing.value?.let { overlay ->
             val offset = overlay.anim.value
             Box(
@@ -185,12 +198,12 @@ fun TowerOfHanoiGame(
 @Composable
 fun CanvasRod() {
     Canvas(Modifier.fillMaxSize()) {
-        val centerX = size.width / 2f;
+        val centerX = size.width / 2f
         val rodW = 4.dp.toPx()
         drawRect(
             Color.DarkGray,
-            Offset(centerX - rodW / 2f, 0f),
-            androidx.compose.ui.geometry.Size(rodW, size.height)
+            topLeft = Offset(centerX - rodW / 2f, 0f),
+            size = Size(rodW, size.height)
         )
     }
 }
