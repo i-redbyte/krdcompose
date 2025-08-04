@@ -89,7 +89,8 @@ fun TowerOfHanoiGame(
             val startTowerSize = game.towers[from].size
             val endTowerSizeBeforeMove = game.towers[to].size
             val ring = game.popRing(from)
-            val fraction = if (rings == 1) 1f else 0.3f + (ring - 1f) / (rings - 1) * 0.7f
+            val fraction = if (rings == 1) 1f
+            else 0.3f + (ring - 1f) / (rings - 1) * 0.7f
 
             val startX = widthPerRodPx * (from + 0.5f)
             val startY = verticalOffsetPx +
@@ -101,13 +102,31 @@ fun TowerOfHanoiGame(
 
             val liftY = (verticalOffsetPx + towerAreaHeightPx - stackHeightPx) - ringHeightPx * 2
 
-            val anim = Animatable(Offset(startX, startY), Offset.VectorConverter)
+            val anim = Animatable(
+                initialValue = Offset(startX, startY),
+                typeConverter = Offset.VectorConverter
+            )
             val color = ringColors[(ring - 1) % ringColors.size]
-            animRing.value = AnimatedRing(ring, color, anim, widthPerRodPx * fraction, ringHeightPx)
+            animRing.value = AnimatedRing(
+                size = ring,
+                color,
+                anim,
+                widthPx = widthPerRodPx * fraction,
+                ringHeightPx
+            )
 
-            anim.animateTo(Offset(startX, liftY), tween(200, easing = LinearEasing))
-            anim.animateTo(Offset(endX, liftY), tween(400, easing = LinearEasing))
-            anim.animateTo(Offset(endX, endY), tween(200, easing = LinearEasing))
+            anim.animateTo(
+                targetValue = Offset(startX, liftY),
+                animationSpec = tween(200, easing = LinearEasing)
+            )
+            anim.animateTo(
+                targetValue = Offset(endX, liftY),
+                animationSpec = tween(400, easing = LinearEasing)
+            )
+            anim.animateTo(
+                targetValue = Offset(endX, endY),
+                animationSpec = tween(200, easing = LinearEasing)
+            )
 
             game.pushRing(to, ring)
             animRing.value = null
@@ -172,10 +191,15 @@ fun TowerOfHanoiGame(
             }
         }
         animRing.value?.let { overlay ->
-            val offset = overlay.anim.value
+            val center = overlay.anim.value
             Box(
                 Modifier
-                    .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                    .offset {
+                        IntOffset(
+                            (center.x - overlay.widthPx / 2f).roundToInt(),
+                            (center.y - overlay.heightPx / 2f).roundToInt()
+                        )
+                    }
                     .size(
                         with(density) { overlay.widthPx.toDp() },
                         with(density) { overlay.heightPx.toDp() }
@@ -184,6 +208,7 @@ fun TowerOfHanoiGame(
                     .background(overlay.color, RoundedCornerShape(8.dp))
             )
         }
+
         LaunchedEffect(autoPlayTrigger) {
             if (autoPlayTrigger == 0) return@LaunchedEffect
             if (isAutoPlaying) return@LaunchedEffect

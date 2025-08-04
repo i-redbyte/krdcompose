@@ -37,11 +37,11 @@ fun HanoiGameScreen() {
             Button(onClick = { autoTrigger++ }) { Text("Автоигра") }
 
             TowerOfHanoiGame(
-                rods = 3,
-                rings = 8,
+                rods = 4,
+                rings = 6,
                 ringColors = listOf(
                     Color(0xFFE57373), Color(0xFF64B5F6), Color(0xFFFFF176),
-                    Color(0xFF81C784), Color(0xFF673AB7), Color.White,
+                    Color(0xFF81C784), Color(0xFF673AB7), Color(0xFF4CAF50),
                     Color(0xFFEB04F3), Color(0xFFA40431), Color(0xFF002342), Color.Black
                 ),
                 onVictory = { moves ->

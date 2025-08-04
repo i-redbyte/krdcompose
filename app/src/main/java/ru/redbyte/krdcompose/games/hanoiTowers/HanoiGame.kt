@@ -27,5 +27,5 @@ class HanoiGame(rods: Int, val rings: Int) {
         towers[to].add(ring); moves++
     }
 
-    fun isVictory(): Boolean = towers.last().size == rings
+    fun isVictory(): Boolean = towers.drop(1).any { it.size == rings }
 }
