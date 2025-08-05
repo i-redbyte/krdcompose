@@ -24,10 +24,12 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
 
 - **[DataSlider](specification/components/dataslider.md)** — компонент слайдера для удобного
   просмотра данных.
- 
-- **[PascalTriangle](specification/components/pascaltriangle.md)** — Кастомизируемый треугольник Паскаля.
+- **[PascalTriangle](specification/components/pascaltriangle.md)** — Кастомизируемый треугольник
+  Паскаля.
 - **[NumberSystemConverter](specification/components/numberSystemConverter.md)** — Конвертер систем
   счисления с визуализацией битов.
+- **[PythagorasTree](specification/components/pythagorasTree.md)** — Отображает классическое
+  **дерево Пифагора** на `Canvas` и может плавно анимировать угол между ветвями.
 
 ## 🎮 Игры
 
