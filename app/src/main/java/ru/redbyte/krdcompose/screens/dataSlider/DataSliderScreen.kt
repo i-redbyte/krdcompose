@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import ru.redbyte.krdcompose.ui.components.DataSlider
 
 @Composable
-fun DataSliderScreen(/*navController: NavController*/) {
+fun DataSliderScreen() {
     val pages = makePages {
         pageOne("Очень интересный текст")
         pageTwo("Так интересно, что хочется читать и читать и читать и читать и читать и читать")
