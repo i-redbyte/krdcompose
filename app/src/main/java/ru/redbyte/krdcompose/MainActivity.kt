@@ -30,6 +30,7 @@ import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
+import ru.redbyte.krdcompose.screens.race.RaceScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.screens.wheel.WheelScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
@@ -65,6 +66,7 @@ class MainActivity : ComponentActivity() {
             composable("wheelScreen") { WheelScreen() }
             composable("hanoiGameScreen") { HanoiGameScreen() }
             composable("pythagorasTreeScreen") { PythagorasTreeScreen() }
+            composable("raceScreen") { RaceScreen() }
         }
     }
 }
@@ -133,6 +135,12 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("pythagorasTreeScreen") }) {
             Text("Дерево Пифагора")
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("raceScreen") }) {
+            Text("Гонки")
         }
     }
 }
