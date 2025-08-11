@@ -15,27 +15,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import ru.redbyte.krdcompose.games.race.RacingGame
 
-@Composable
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
 fun RaceScreen() {
     val ctx = LocalContext.current
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                WindowInsets.systemBars
-                    .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top + WindowInsetsSides.Bottom)
-                    .asPaddingValues()
-            )
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets.systemBars
     ) { innerPadding ->
         RacingGame(
-            onGameOver = { time, score ->
-                Toast.makeText(
-                    ctx,
-                    "Time: $time sec, Score: $score",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            onExit = { (ctx as? android.app.Activity)?.finish() }
         )
     }
 }
