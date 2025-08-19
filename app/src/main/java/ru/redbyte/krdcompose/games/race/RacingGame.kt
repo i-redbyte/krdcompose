@@ -126,6 +126,7 @@ private data class ObstacleState(
  *
  * @param modifier [Modifier] для внешней настройки контейнера игры.
  * @param onExit Callback, вызываемый при нажатии кнопки «Выйти» в диалоге окончания игры.
+ * @param speed Параметр скорости. При `1f` игра работает в базовом режиме,
  *
  * ## Пример интеграции
  * ```
@@ -134,7 +135,8 @@ private data class ObstacleState(
  *         modifier = Modifier
  *             .fillMaxSize()
  *             .padding(innerPadding),
- *         onExit = { navController.popBackStack() }
+ *         onExit = { navController.popBackStack() },
+ *         speed = 1.5f
  *     )
  * }
  * ```
@@ -157,14 +159,14 @@ private data class ObstacleState(
 @Composable
 fun RacingGame(
     modifier: Modifier = Modifier,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    speed: Float = 1f
 ) {
     val context = LocalContext.current
     val sensorManager = remember { context.getSystemService(SENSOR_SERVICE) as SensorManager }
-    val accelerometer =
-        remember { sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) }
+    val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
 
-    val playerPainter = painterResource(R.drawable.car_player)
+    val playerPainter = painterResource(R.drawable.mad_biker) //car_player
     val enemyPainter = painterResource(R.drawable.car_enemy)
     val minePainter = painterResource(R.drawable.mine)
     val caltropPainter = painterResource(R.drawable.caltrop)
@@ -207,7 +209,7 @@ fun RacingGame(
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 if (!running || !tiltEnabled) return
-                if (event.sensor.type == android.hardware.Sensor.TYPE_ACCELEROMETER) {
+                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
                     val x = event.values[0]
                     if (tiltLatch == 0) {
                         if (x > tiltThreshold) {
@@ -287,7 +289,6 @@ fun RacingGame(
                 }
 
                 drawRect(Color(0xFF101010), size = size)
-
                 drawRect(Color(0xFFCCCCCC), topLeft = Offset(0f, 0f), size = Size(6f, size.height))
                 drawRect(
                     Color(0xFFCCCCCC),
@@ -321,10 +322,7 @@ fun RacingGame(
                     painter = p,
                     contentDescription = null,
                     modifier = Modifier
-                        .graphicsLayer {
-                            translationX = x
-                            translationY = o.y.value
-                        }
+                        .graphicsLayer { translationX = x; translationY = o.y.value }
                         .size(o.widthDp, o.heightDp)
                 )
             }
@@ -352,9 +350,7 @@ fun RacingGame(
                 contentDescription = null,
                 modifier = Modifier
                     .graphicsLayer {
-                        translationX = carX + xKnock
-                        translationY = carY + yOff
-                        rotationZ = rot
+                        translationX = carX + xKnock; translationY = carY + yOff; rotationZ = rot
                     }
                     .size(with(density) { carWidth.toDp() }, with(density) { carHeight.toDp() })
             )
@@ -378,23 +374,25 @@ fun RacingGame(
 
         var lastSpawnMs = 0L
         val baseIntervalMs = 900L
+        val minIntervalMs = 380L
+        val maxIntervalMs = 1100L
+
+        val baseCorridorMinHoldMs = 2200L
+        val baseTransitionSafeMs = 900L
+        val baseCorridorCooldownMs = 1400L
+        val baseTransitionDualCooldownMs = 900L
 
         var corridorLane = (laneCount / 2)
         var plannedCorridorLane: Int? = null
         var transitionWindowMs = 0L
         var corridorSinceChangeMs = 0L
-        val corridorMinHoldMs = 2200L
-        val transitionSafeMs = 900L
 
         val laneCooldownUntilMs = LongArray(laneCount) { 0L }
-        val corridorCooldownMs = 1400L
-        val transitionDualCooldownMs = 900L
 
         fun canSpawnInLane(lane: Int, minGapPx: Float): Boolean {
-            val lastBottom = obstacles.asSequence()
-                .filter { it.lane == lane }
-                .map { it.y.value + it.heightPx }
-                .maxOrNull()
+            val lastBottom =
+                obstacles.asSequence().filter { it.lane == lane }.map { it.y.value + it.heightPx }
+                    .maxOrNull()
             return lastBottom == null || lastBottom < -minGapPx
         }
 
@@ -424,41 +422,38 @@ fun RacingGame(
             val dt = ((now - lastNs).coerceAtLeast(0)) / 1_000_000_000f
             lastNs = now
 
-            val curMs = now / 1_000_000L
             val h = gameSize.height.toFloat()
-            val speed = h / 3.5f
+            val baseSpeed = h / 3.5f
+            val speedPx = baseSpeed * speed
 
             if (running) {
                 secAcc += dt
                 if (secAcc >= 1f) {
                     timeSec += 1; secAcc -= 1f
                 }
-                roadOffset = (roadOffset + speed * dt) % (stripeLenPx + stripeGapPx)
+                roadOffset = (roadOffset + speedPx * dt) % (stripeLenPx + stripeGapPx)
             }
 
             val difficultyK = (1f + min(timeSec, 120) / 120f)
             val jitter = Random.nextInt(-200, 200)
-            val targetInterval =
-                (baseIntervalMs / difficultyK + jitter).coerceIn(380f, 1100f).toLong()
+            val spawnInterval = (baseIntervalMs / (speed * difficultyK) + jitter).coerceIn(
+                (minIntervalMs / speed).toFloat(),
+                (maxIntervalMs / speed).toFloat()
+            ).toLong()
 
-            if (running && curMs - lastSpawnMs > targetInterval && obstacles.size < maxObstacles) {
-                lastSpawnMs = curMs
-                val minGap = h * 0.22f
+            if (running && now / 1_000_000L - lastSpawnMs > spawnInterval && obstacles.size < maxObstacles) {
+                lastSpawnMs = now / 1_000_000L
+                val minGap = (h * 0.22f / speed).coerceIn(h * 0.12f, h * 0.35f)
 
-                val forbid = buildSet {
-                    add(corridorLane)
-                    plannedCorridorLane?.let { add(it) }
-                }
-
-                val candidate = (0 until laneCount)
-                    .filter { it !in forbid && curMs >= laneCooldownUntilMs[it] }
-                    .shuffled()
+                val forbid = buildSet { add(corridorLane); plannedCorridorLane?.let { add(it) } }
+                val candidate =
+                    (0 until laneCount).filter { it !in forbid && now / 1_000_000L >= laneCooldownUntilMs[it] }
+                        .shuffled()
 
                 var placed = 0
                 val toPlace = when (laneCount) {
                     3 -> (1..2).random(); else -> (1 until laneCount).random()
                 }
-
                 for (lane in candidate) {
                     if (placed >= toPlace) break
                     if (!canSpawnInLane(lane, minGap)) continue
@@ -468,10 +463,9 @@ fun RacingGame(
                     spawnObstacle(now, lane, type, h)
                     placed++
                 }
-
                 if (placed == 0) {
                     val fallback = (0 until laneCount).firstOrNull {
-                        it != corridorLane && curMs >= laneCooldownUntilMs[it] && canSpawnInLane(
+                        it != corridorLane && now / 1_000_000L >= laneCooldownUntilMs[it] && canSpawnInLane(
                             it,
                             minGap
                         )
@@ -483,10 +477,9 @@ fun RacingGame(
             val it = obstacles.listIterator()
             while (it.hasNext()) {
                 val o = it.next()
-                if (running) o.y.value = o.y.value + speed * dt
+                if (running) o.y.value = o.y.value + speedPx * dt
                 if (o.y.value > gameSize.height) {
-                    it.remove()
-                    if (running) score += 100
+                    it.remove(); if (running) score += 100
                 }
             }
 
@@ -495,29 +488,6 @@ fun RacingGame(
                 val carTop = carY
                 val carHit =
                     insetRectByScale(carLeft, carTop, carLeft + carWidth, carTop + carHeight, 0.75f)
-
-                var lanesBlockedNow = 0
-                for (lane in 0 until laneCount) {
-                    val blocking = obstacles.any { o ->
-                        if (o.lane != lane) false
-                        else {
-                            val ox = lane * laneWidth + (laneWidth - o.widthPx) / 2f
-                            val scale = when (o.type) {
-                                ObstacleType.ENEMY_CAR -> 0.70f; ObstacleType.MINE -> 0.55f; ObstacleType.CALTROP -> 0.60f
-                            }
-                            val oHit = insetRectByScale(
-                                ox,
-                                o.y.value,
-                                ox + o.widthPx,
-                                o.y.value + o.heightPx,
-                                scale
-                            )
-                            overlap(carHit, oHit)
-                        }
-                    }
-                    if (blocking) lanesBlockedNow++
-                }
-
                 loop@ for (o in obstacles) {
                     val ox = o.lane * laneWidth + (laneWidth - o.widthPx) / 2f
                     val scale = when (o.type) {
@@ -531,42 +501,29 @@ fun RacingGame(
                         scale
                     )
                     if (overlap(carHit, oHit)) {
-                        running = false
-                        crashType = o.type
-                        crashProgress = 0f
-                        break@loop
+                        running = false; crashType = o.type; crashProgress = 0f; break@loop
                     }
-                }
-
-                if (lanesBlockedNow >= laneCount) {
-                    val safest = (0 until laneCount).minByOrNull { lane ->
-                        obstacles.asSequence().filter { it.lane == lane }
-                            .minOfOrNull { abs((it.y.value + it.heightPx) - carTop) }
-                            .let { it ?: Float.MAX_VALUE }
-                    } ?: corridorLane
-                    plannedCorridorLane = safest
-                    transitionWindowMs = transitionSafeMs
                 }
             } else if (crashType != null) {
                 crashProgress = (crashProgress + dt / 0.9f).coerceAtMost(1f)
                 if (crashProgress >= 1f) {
-                    showGameOver = true
-                    break
+                    showGameOver = true; break
                 }
             }
 
             corridorSinceChangeMs += (dt * 1000).toLong()
+            val corridorMinHoldMs = (baseCorridorMinHoldMs / speed).toLong().coerceAtLeast(600L)
+            val transitionSafeMs = (baseTransitionSafeMs / speed).toLong().coerceAtLeast(300L)
+            val corridorCooldownMs = (baseCorridorCooldownMs / speed).toLong().coerceAtLeast(400L)
+            val transitionDualCooldownMs =
+                (baseTransitionDualCooldownMs / speed).toLong().coerceAtLeast(300L)
+
             if (plannedCorridorLane != null) {
-                if (transitionWindowMs == transitionSafeMs) {
-                    laneCooldownUntilMs[corridorLane] = curMs + transitionDualCooldownMs
-                    laneCooldownUntilMs[plannedCorridorLane!!] = curMs + transitionDualCooldownMs
-                }
                 transitionWindowMs -= (dt * 1000).toLong()
                 if (transitionWindowMs <= 0L) {
-                    corridorLane = plannedCorridorLane!!
-                    plannedCorridorLane = null
-                    corridorSinceChangeMs = 0L
-                    laneCooldownUntilMs[corridorLane] = curMs + corridorCooldownMs
+                    corridorLane = plannedCorridorLane!!; plannedCorridorLane =
+                        null; corridorSinceChangeMs = 0L
+                    laneCooldownUntilMs[corridorLane] = now / 1_000_000L + corridorCooldownMs
                 }
             } else if (corridorSinceChangeMs >= corridorMinHoldMs && running) {
                 val dir =
@@ -574,6 +531,9 @@ fun RacingGame(
                 if (dir != null) {
                     plannedCorridorLane = (corridorLane + dir).coerceIn(0, laneCount - 1)
                     transitionWindowMs = transitionSafeMs
+                    laneCooldownUntilMs[corridorLane] = now / 1_000_000L + transitionDualCooldownMs
+                    laneCooldownUntilMs[plannedCorridorLane!!] =
+                        now / 1_000_000L + transitionDualCooldownMs
                 }
             }
         }
@@ -583,11 +543,11 @@ fun RacingGame(
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {
-                TextButton(onClick = { showGameOver = false; session += 1 }) { Text("Повторить") }
+                TextButton(onClick = {
+                    showGameOver = false; session += 1
+                }) { Text("Повторить") }
             },
-            dismissButton = {
-                TextButton(onClick = { onExit() }) { Text("Выйти") }
-            },
+            dismissButton = { TextButton(onClick = { onExit() }) { Text("Выйти") } },
             title = { Text("Игра окончена") },
             text = { Text("Время: $timeSec сек\nОчки: $score") }
         )
