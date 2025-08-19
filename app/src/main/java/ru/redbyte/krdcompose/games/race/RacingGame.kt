@@ -1,50 +1,47 @@
 package ru.redbyte.krdcompose.games.race
 
-import androidx.compose.runtime.Composable
-import android.content.Context
 import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
-import android.hardware.Sensor.TYPE_ACCELEROMETER
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.hardware.SensorManager.*
+import android.hardware.SensorManager.SENSOR_DELAY_GAME
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
-import kotlin.random.Random
-import ru.redbyte.krdcompose.R
-import kotlin.math.min
-import androidx.compose.ui.geometry.Rect
-import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.sin
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.material3.Switch
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import ru.redbyte.krdcompose.games.race.ObstacleType.*
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.isActive
+import ru.redbyte.krdcompose.R
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.random.Random
 
 enum class ObstacleType { ENEMY_CAR, MINE, CALTROP }
 
@@ -59,18 +56,113 @@ private data class ObstacleState(
     val y: MutableState<Float>
 )
 
+/**
+ * [RacingGame] — Jetpack Compose-компонент, реализующий аркадную игру «Гонки».
+ *
+ * ## Архитектура и устройство
+ *
+ * ### Игровой цикл
+ * - Игровой цикл реализован внутри `LaunchedEffect` с использованием [withFrameNanos].
+ * - Каждый кадр вычисляется прошедшее время `dt` (в секундах), на основе которого:
+ *   - обновляется позиция автомобиля игрока (через ввод);
+ *   - обновляются координаты препятствий (скорость пропорциональна высоте экрана: `speed = screenHeight / 3.5f`);
+ *   - проверяются столкновения;
+ *   - инкрементируется секундомер.
+ *
+ * ### Управление
+ * - **Свайпы**: обработка через [detectHorizontalDragGestures].
+ *   - Во время drag автомобиль смещается пропорционально `dragAmount / laneWidth`.
+ *   - После окончания жеста позиция «привязывается» к ближайшей полосе (`roundToInt()`).
+ * - **Акселерометр**: события от [Sensor.TYPE_ACCELEROMETER].
+ *   - Используется «порог» (`tiltThreshold`) для исключения дребезга.
+ *   - Наклон влево/вправо смещает машину на одну полосу.
+ *   - Инверсия сторон учтена: положительный X => движение вправо.
+ * - Режим управления переключается через [Switch] в UI.
+ *
+ * ### Генерация препятствий
+ * - Каждое препятствие имеет тип ([ObstacleType]) и параметры размеров.
+ * - Интервал спавна = `baseIntervalMs / difficultyK ± jitter`:
+ *   - `baseIntervalMs` = 900 мс.
+ *   - `difficultyK` линейно растёт от 1.0 до 2.0 за первые 120 секунд игры.
+ *   - `jitter` — случайный сдвиг в пределах ±200 мс.
+ * - В каждый тик гарантируется «коридор» — хотя бы одна полоса остаётся свободной.
+ * - Для исключения блокировки всех полос используются:
+ *   - пер-полосные кулдауны `laneCooldownUntilMs`;
+ *   - «безопасное окно» при смене коридора (обе полосы временно запрещены для спавна).
+ *
+ * ### Коллизии
+ * - Хитбоксы автомобилей и препятствий аппроксимируются прямоугольниками [Rect].
+ * - Для точности хитбоксы уменьшаются (`insetRectByScale`) на коэффициент:
+ *   - ENEMY_CAR = 0.70f
+ *   - MINE = 0.55f
+ *   - CALTROP = 0.60f
+ *   - Игрок = 0.75f
+ * - Проверка: AABB-коллизия (`a.left < b.right && a.right > b.left ...`).
+ * - При пересечении:
+ *   - игра останавливается (`running = false`);
+ *   - фиксируется [crashType];
+ *   - запускается анимация аварии.
+ *
+ * ### Анимации аварий
+ * - Рассчитываются по времени с момента столкновения (`crashProgress ∈ [0..1]`).
+ * - Типы:
+ *   - MINE: вертикальный подброс `-sin(progress * PI) * h*0.18` + вращение 540°.
+ *   - ENEMY_CAR: смещение в сторону +25° вращение.
+ *   - CALTROP: подскок `-sin(progress * PI) * h*0.12` + колебания ±30°.
+ * - После завершения (`progress >= 1f`) показывается диалог «Игра окончена».
+ *
+ * ### Отрисовка
+ * - Фон:
+ *   - Тёмный прямоугольник дороги.
+ *   - Боковые линии (`drawRect`).
+ *   - Прерывистая разметка (цикл прямоугольников с фазовым сдвигом `roadOffset`).
+ * - Игровые объекты:
+ *   - Автомобиль игрока и препятствия отрисовываются через [Image] и [graphicsLayer].
+ *   - Положение задаётся напрямую: `translationX`, `translationY`.
+ *   - Это даёт GPU-ускорение и минимальную нагрузку.
+ * - Обрезка: весь Box и Canvas используют `clipToBounds()`, чтобы объекты не выходили за поле.
+ *
+ * ## API
+ *
+ * @param modifier [Modifier] для внешней настройки контейнера игры.
+ * @param onExit Callback, вызываемый при нажатии кнопки «Выйти» в диалоге окончания игры.
+ *
+ * ## Пример интеграции
+ * ```
+ * Scaffold { innerPadding ->
+ *     RacingGame(
+ *         modifier = Modifier
+ *             .fillMaxSize()
+ *             .padding(innerPadding),
+ *         onExit = { navController.popBackStack() }
+ *     )
+ * }
+ * ```
+ *
+ * ## Требования к ресурсам
+ * - В проект должны быть добавлены PNG-изображения:
+ *   - `car_player.png`
+ *   - `car_enemy.png`
+ *   - `mine.png`
+ *   - `caltrop.png`
+ * - Рекомендуемый размер: 256×256 px, прозрачный фон.
+ *
+ * ## Ограничения
+ * - Горизонтальная ориентация экрана не поддерживается.
+ * - Количество полос зашито в 3 (можно расширить при модификации кода).
+ * - Сложность фиксирована: растёт только частота спавна, скорости остаются постоянными.
+ *
+ * @see ObstacleType
+ */
 @Composable
 fun RacingGame(
     modifier: Modifier = Modifier,
     onExit: () -> Unit
 ) {
     val context = LocalContext.current
-    val sensorManager = remember {
-        context.getSystemService(SENSOR_SERVICE) as SensorManager
-    }
-    val accelerometer = remember {
-        sensorManager.getDefaultSensor(TYPE_ACCELEROMETER)
-    }
+    val sensorManager = remember { context.getSystemService(SENSOR_SERVICE) as SensorManager }
+    val accelerometer =
+        remember { sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) }
 
     val playerPainter = painterResource(R.drawable.car_player)
     val enemyPainter = painterResource(R.drawable.car_enemy)
@@ -107,19 +199,24 @@ fun RacingGame(
     val density = LocalDensity.current
     val swipePxPerLane = max(laneWidth, 1f)
 
+    var roadOffset by remember { mutableFloatStateOf(0f) }
+    val stripeLenPx = max(24f, laneWidth * 0.35f)
+    val stripeGapPx = stripeLenPx
+
     DisposableEffect(tiltEnabled) {
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 if (!running || !tiltEnabled) return
-                if (event.sensor.type == TYPE_ACCELEROMETER) {
+                if (event.sensor.type == android.hardware.Sensor.TYPE_ACCELEROMETER) {
                     val x = event.values[0]
                     if (tiltLatch == 0) {
                         if (x > tiltThreshold) {
-                            carPos = (carPos + 1f).coerceIn(0f, (laneCount - 1).toFloat())
-                            tiltLatch = 1
+                            carPos =
+                                (carPos + 1f).coerceIn(0f, (laneCount - 1).toFloat()); tiltLatch = 1
                         } else if (x < -tiltThreshold) {
-                            carPos = (carPos - 1f).coerceIn(0f, (laneCount - 1).toFloat())
-                            tiltLatch = -1
+                            carPos =
+                                (carPos - 1f).coerceIn(0f, (laneCount - 1).toFloat()); tiltLatch =
+                                -1
                         }
                     } else {
                         if (tiltLatch == 1 && x < tiltThreshold / 2f) tiltLatch = 0
@@ -127,14 +224,9 @@ fun RacingGame(
                     }
                 }
             }
-
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
         }
-        if (tiltEnabled) sensorManager.registerListener(
-            listener,
-            accelerometer,
-            SENSOR_DELAY_GAME
-        )
+        if (tiltEnabled) sensorManager.registerListener(listener, accelerometer, SENSOR_DELAY_GAME)
         onDispose { if (tiltEnabled) sensorManager.unregisterListener(listener) }
     }
 
@@ -145,15 +237,12 @@ fun RacingGame(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row {
-                Text(
-                    text = "Время: $timeSec",
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Время: $timeSec", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(16.dp))
-                Text(text = "Очки: $score", fontWeight = FontWeight.Bold)
+                Text("Очки: $score", fontWeight = FontWeight.Bold)
             }
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text("Наклон")
@@ -166,25 +255,27 @@ fun RacingGame(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .clipToBounds()
                 .onGloballyPositioned { gameSize = it.size }
                 .pointerInput(session) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
                             if (!running) return@detectHorizontalDragGestures
                             change.consume()
-                            carPos = (carPos + dragAmount / swipePxPerLane)
-                                .coerceIn(0f, (laneCount - 1).toFloat())
+                            carPos = (carPos + dragAmount / swipePxPerLane).coerceIn(
+                                0f,
+                                (laneCount - 1).toFloat()
+                            )
                         },
                         onDragEnd = {
-                            carPos = carPos
-                                .roundToInt()
-                                .coerceIn(0, laneCount - 1)
-                                .toFloat()
+                            carPos = carPos.roundToInt().coerceIn(0, laneCount - 1).toFloat()
                         }
                     )
                 }
         ) {
-            Canvas(Modifier.matchParentSize()) {
+            Canvas(Modifier
+                .matchParentSize()
+                .clipToBounds()) {
                 if (gameSize.width > 0 && gameSize.height > 0) {
                     laneWidth = gameSize.width.toFloat() / laneCount
                     val base = min(laneWidth, gameSize.height / 5f)
@@ -194,21 +285,36 @@ fun RacingGame(
                     carX = carPos * laneWidth + (laneWidth - carWidth) / 2f
                     carY = gameSize.height - carHeight - gameSize.height * 0.05f
                 }
+
+                drawRect(Color(0xFF101010), size = size)
+
+                drawRect(Color(0xFFCCCCCC), topLeft = Offset(0f, 0f), size = Size(6f, size.height))
+                drawRect(
+                    Color(0xFFCCCCCC),
+                    topLeft = Offset(size.width - 6f, 0f),
+                    size = Size(6f, size.height)
+                )
+
+                val totalLen = stripeLenPx + stripeGapPx
                 for (i in 1 until laneCount) {
                     val x = i * laneWidth
-                    drawRect(
-                        color = Color(0x332E2E2E),
-                        topLeft = Offset(x - 1.5f, 0f),
-                        size = Size(3f, size.height)
-                    )
+                    var y = -stripeLenPx + (roadOffset % totalLen)
+                    while (y < size.height) {
+                        drawRect(
+                            color = Color(0x66FFFFFF),
+                            topLeft = Offset(x - 2f, y),
+                            size = Size(4f, stripeLenPx)
+                        )
+                        y += totalLen
+                    }
                 }
             }
 
             obstacles.forEach { o ->
                 val p = when (o.type) {
-                    ENEMY_CAR -> enemyPainter
-                    MINE -> minePainter
-                    CALTROP -> caltropPainter
+                    ObstacleType.ENEMY_CAR -> enemyPainter
+                    ObstacleType.MINE -> minePainter
+                    ObstacleType.CALTROP -> caltropPainter
                 }
                 val x = o.lane * laneWidth + (laneWidth - o.widthPx) / 2f
                 Image(
@@ -224,28 +330,21 @@ fun RacingGame(
             }
 
             val rot = when (crashType) {
-                MINE -> 540f * crashProgress
-                ENEMY_CAR -> 25f * crashProgress
-                CALTROP -> 30f * sin(crashProgress * PI).toFloat()
+                ObstacleType.MINE -> 540f * crashProgress
+                ObstacleType.ENEMY_CAR -> 25f * crashProgress
+                ObstacleType.CALTROP -> 30f * sin(crashProgress * PI).toFloat()
                 null -> 0f
             }
             val yOff = when (crashType) {
-                MINE -> {
-                    -sin(crashProgress * PI).toFloat() * (gameSize.height * 0.18f)
-                }
-
-                CALTROP -> {
-                    -sin(crashProgress * PI).toFloat() * (gameSize.height * 0.12f)
-                }
-
+                ObstacleType.MINE -> -sin(crashProgress * PI).toFloat() * (gameSize.height * 0.18f)
+                ObstacleType.CALTROP -> -sin(crashProgress * PI).toFloat() * (gameSize.height * 0.12f)
                 else -> 0f
             }
             val xKnock = when (crashType) {
-                ENEMY_CAR -> {
+                ObstacleType.ENEMY_CAR -> {
                     val dir = if (carPos < laneCount - 1) 1f else -1f
                     dir * (gameSize.width * 0.12f) * crashProgress
                 }
-
                 else -> 0f
             }
             Image(
@@ -257,10 +356,7 @@ fun RacingGame(
                         translationY = carY + yOff
                         rotationZ = rot
                     }
-                    .size(
-                        width = with(density) { carWidth.toDp() },
-                        height = with(density) { carHeight.toDp() }
-                    )
+                    .size(with(density) { carWidth.toDp() }, with(density) { carHeight.toDp() })
             )
         }
     }
@@ -275,9 +371,11 @@ fun RacingGame(
         crashType = null
         crashProgress = 0f
         showGameOver = false
+        roadOffset = 0f
 
         var lastNs = withFrameNanos { it }
         var secAcc = 0f
+
         var lastSpawnMs = 0L
         val baseIntervalMs = 900L
 
@@ -287,6 +385,10 @@ fun RacingGame(
         var corridorSinceChangeMs = 0L
         val corridorMinHoldMs = 2200L
         val transitionSafeMs = 900L
+
+        val laneCooldownUntilMs = LongArray(laneCount) { 0L }
+        val corridorCooldownMs = 1400L
+        val transitionDualCooldownMs = 900L
 
         fun canSpawnInLane(lane: Int, minGapPx: Float): Boolean {
             val lastBottom = obstacles.asSequence()
@@ -298,11 +400,11 @@ fun RacingGame(
 
         fun spawnObstacle(now: Long, lane: Int, type: ObstacleType, hScreen: Float) {
             val w = when (type) {
-                ENEMY_CAR -> min(laneWidth * 0.78f, hScreen * 0.20f)
-                MINE -> laneWidth * 0.52f
-                CALTROP -> laneWidth * 0.56f
+                ObstacleType.ENEMY_CAR -> min(laneWidth * 0.78f, hScreen * 0.20f)
+                ObstacleType.MINE -> laneWidth * 0.52f
+                ObstacleType.CALTROP -> laneWidth * 0.56f
             }
-            val obH = if (type == ENEMY_CAR) w * 1.25f else w
+            val obH = if (type == ObstacleType.ENEMY_CAR) w * 1.25f else w
             val wDp = with(density) { w.toDp() }
             val hDp = with(density) { obH.toDp() }
             obstacles += ObstacleState(
@@ -322,46 +424,46 @@ fun RacingGame(
             val dt = ((now - lastNs).coerceAtLeast(0)) / 1_000_000_000f
             lastNs = now
 
+            val curMs = now / 1_000_000L
+            val h = gameSize.height.toFloat()
+            val speed = h / 3.5f
+
             if (running) {
                 secAcc += dt
                 if (secAcc >= 1f) {
-                    timeSec += 1
-                    secAcc -= 1f
+                    timeSec += 1; secAcc -= 1f
                 }
+                roadOffset = (roadOffset + speed * dt) % (stripeLenPx + stripeGapPx)
             }
-
-            val h = gameSize.height.toFloat()
-            val speed = h / 3.5f
-            val curMs = now / 1_000_000L
 
             val difficultyK = (1f + min(timeSec, 120) / 120f)
             val jitter = Random.nextInt(-200, 200)
-            val targetInterval = (baseIntervalMs / difficultyK + jitter)
-                .coerceIn(400f, 1100f)
-                .toLong()
+            val targetInterval =
+                (baseIntervalMs / difficultyK + jitter).coerceIn(380f, 1100f).toLong()
 
             if (running && curMs - lastSpawnMs > targetInterval && obstacles.size < maxObstacles) {
                 lastSpawnMs = curMs
                 val minGap = h * 0.22f
 
-                val forbidden = buildSet {
+                val forbid = buildSet {
                     add(corridorLane)
                     plannedCorridorLane?.let { add(it) }
                 }
-                val candidate = (0 until laneCount).filter { it !in forbidden }.shuffled()
+
+                val candidate = (0 until laneCount)
+                    .filter { it !in forbid && curMs >= laneCooldownUntilMs[it] }
+                    .shuffled()
 
                 var placed = 0
                 val toPlace = when (laneCount) {
-                    3 -> (1..2).random()
-                    else -> (1 until laneCount).random()
+                    3 -> (1..2).random(); else -> (1 until laneCount).random()
                 }
+
                 for (lane in candidate) {
                     if (placed >= toPlace) break
                     if (!canSpawnInLane(lane, minGap)) continue
                     val type = when (Random.nextInt(3)) {
-                        0 -> ENEMY_CAR
-                        1 -> MINE
-                        else -> CALTROP
+                        0 -> ObstacleType.ENEMY_CAR; 1 -> ObstacleType.MINE; else -> ObstacleType.CALTROP
                     }
                     spawnObstacle(now, lane, type, h)
                     placed++
@@ -369,16 +471,12 @@ fun RacingGame(
 
                 if (placed == 0) {
                     val fallback = (0 until laneCount).firstOrNull {
-                        it != corridorLane && canSpawnInLane(it, minGap)
-                    }
-                    if (fallback != null) {
-                        spawnObstacle(
-                            now,
-                            lane = fallback,
-                            type = ENEMY_CAR,
-                            hScreen = h
+                        it != corridorLane && curMs >= laneCooldownUntilMs[it] && canSpawnInLane(
+                            it,
+                            minGap
                         )
                     }
+                    if (fallback != null) spawnObstacle(now, fallback, ObstacleType.ENEMY_CAR, h)
                 }
             }
 
@@ -395,19 +493,35 @@ fun RacingGame(
             if (running) {
                 val carLeft = carPos * laneWidth + (laneWidth - carWidth) / 2f
                 val carTop = carY
-                val carHit = insetRectByScale(
-                    carLeft,
-                    carTop,
-                    carLeft + carWidth,
-                    carTop + carHeight,
-                    0.75f
-                )
+                val carHit =
+                    insetRectByScale(carLeft, carTop, carLeft + carWidth, carTop + carHeight, 0.75f)
+
+                var lanesBlockedNow = 0
+                for (lane in 0 until laneCount) {
+                    val blocking = obstacles.any { o ->
+                        if (o.lane != lane) false
+                        else {
+                            val ox = lane * laneWidth + (laneWidth - o.widthPx) / 2f
+                            val scale = when (o.type) {
+                                ObstacleType.ENEMY_CAR -> 0.70f; ObstacleType.MINE -> 0.55f; ObstacleType.CALTROP -> 0.60f
+                            }
+                            val oHit = insetRectByScale(
+                                ox,
+                                o.y.value,
+                                ox + o.widthPx,
+                                o.y.value + o.heightPx,
+                                scale
+                            )
+                            overlap(carHit, oHit)
+                        }
+                    }
+                    if (blocking) lanesBlockedNow++
+                }
+
                 loop@ for (o in obstacles) {
                     val ox = o.lane * laneWidth + (laneWidth - o.widthPx) / 2f
                     val scale = when (o.type) {
-                        ENEMY_CAR -> 0.70f
-                        MINE -> 0.55f
-                        CALTROP -> 0.60f
+                        ObstacleType.ENEMY_CAR -> 0.70f; ObstacleType.MINE -> 0.55f; ObstacleType.CALTROP -> 0.60f
                     }
                     val oHit = insetRectByScale(
                         ox,
@@ -423,6 +537,16 @@ fun RacingGame(
                         break@loop
                     }
                 }
+
+                if (lanesBlockedNow >= laneCount) {
+                    val safest = (0 until laneCount).minByOrNull { lane ->
+                        obstacles.asSequence().filter { it.lane == lane }
+                            .minOfOrNull { abs((it.y.value + it.heightPx) - carTop) }
+                            .let { it ?: Float.MAX_VALUE }
+                    } ?: corridorLane
+                    plannedCorridorLane = safest
+                    transitionWindowMs = transitionSafeMs
+                }
             } else if (crashType != null) {
                 crashProgress = (crashProgress + dt / 0.9f).coerceAtMost(1f)
                 if (crashProgress >= 1f) {
@@ -433,16 +557,20 @@ fun RacingGame(
 
             corridorSinceChangeMs += (dt * 1000).toLong()
             if (plannedCorridorLane != null) {
+                if (transitionWindowMs == transitionSafeMs) {
+                    laneCooldownUntilMs[corridorLane] = curMs + transitionDualCooldownMs
+                    laneCooldownUntilMs[plannedCorridorLane!!] = curMs + transitionDualCooldownMs
+                }
                 transitionWindowMs -= (dt * 1000).toLong()
                 if (transitionWindowMs <= 0L) {
-                    corridorLane = plannedCorridorLane
+                    corridorLane = plannedCorridorLane!!
                     plannedCorridorLane = null
                     corridorSinceChangeMs = 0L
+                    laneCooldownUntilMs[corridorLane] = curMs + corridorCooldownMs
                 }
             } else if (corridorSinceChangeMs >= corridorMinHoldMs && running) {
-                val dir = listOf(-1, 1)
-                    .filter { (corridorLane + it) in 0 until laneCount }
-                    .randomOrNull()
+                val dir =
+                    listOf(-1, 1).filter { (corridorLane + it) in 0 until laneCount }.randomOrNull()
                 if (dir != null) {
                     plannedCorridorLane = (corridorLane + dir).coerceIn(0, laneCount - 1)
                     transitionWindowMs = transitionSafeMs
@@ -455,17 +583,10 @@ fun RacingGame(
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showGameOver = false
-                        session += 1
-                    }
-                ) { Text("Повторить") }
+                TextButton(onClick = { showGameOver = false; session += 1 }) { Text("Повторить") }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { onExit() }
-                ) { Text("Выйти") }
+                TextButton(onClick = { onExit() }) { Text("Выйти") }
             },
             title = { Text("Игра окончена") },
             text = { Text("Время: $timeSec сек\nОчки: $score") }
