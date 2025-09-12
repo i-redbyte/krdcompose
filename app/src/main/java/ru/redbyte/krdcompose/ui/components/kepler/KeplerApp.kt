@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.isActive
+import ru.redbyte.krdcompose.utils.TrailPathCache
 import kotlin.math.*
 
 enum class OrbitType { Circular, Elliptical, Parabolic, Hyperbolic }
@@ -188,7 +189,7 @@ fun KeplerApp() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     orbitParams: OrbitParams,
@@ -201,21 +202,24 @@ fun SettingsScreen(
     onWorldChange: (WorldConstraints) -> Unit,
     onStart: () -> Unit
 ) {
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("Kepler Settings") })
-    }) { padding ->
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Kepler Settings") }) }
+    ) { padding ->
         Column(
             Modifier
-                .statusBarsPadding()
-                .navigationBarsPadding()
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text("Тип орбиты", fontWeight = FontWeight.SemiBold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 3
+            ) {
                 OrbitType.entries.forEach { t ->
                     FilterChip(
                         selected = orbitParams.type == t,
@@ -224,11 +228,13 @@ fun SettingsScreen(
                     )
                 }
             }
+
             LabeledNumberField(
                 label = "Начальная дистанция",
                 value = orbitParams.initialDistance,
                 onChange = { onOrbitChange(orbitParams.copy(initialDistance = it.coerceAtLeast(1.0))) }
             )
+
             if (orbitParams.type == OrbitType.Elliptical) {
                 LabeledSlider(
                     label = "Эксцентриситет (0..0.99)",
@@ -247,23 +253,39 @@ fun SettingsScreen(
                     steps = 0
                 )
             }
+
             Text("Ограничения мира", fontWeight = FontWeight.SemiBold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Checkbox(
                     checked = world.scaleToFit,
-                    onCheckedChange = { onWorldChange(world.copy(scaleToFit = it)) })
-                Text("Масштабировать, чтобы планета всегда была в кадре")
+                    onCheckedChange = { onWorldChange(world.copy(scaleToFit = it)) }
+                )
+                Text(
+                    "Масштабировать, чтобы планета всегда была в кадре",
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .weight(1f)
+                )
             }
+
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Поведение на границе:")
+                Text(
+                    "Поведение на границе:",
+                    modifier = Modifier.weight(1f)
+                )
                 DropdownEnum(
                     current = world.boundaryMode,
                     onSelect = { onWorldChange(world.copy(boundaryMode = it)) }
                 )
             }
+
             LabeledSlider(
                 label = "Внутренние поля экрана (доля)",
                 value = world.paddingFraction,
@@ -271,6 +293,7 @@ fun SettingsScreen(
                 valueRange = 0f..0.2f,
                 steps = 0
             )
+
             LabeledSlider(
                 label = "Макс. радиус мира = множитель × нач. дистанции",
                 value = world.maxWorldRadiusMultiplier,
@@ -278,6 +301,7 @@ fun SettingsScreen(
                 valueRange = 2f..10f,
                 steps = 8
             )
+
             Text("Цвета", fontWeight = FontWeight.SemiBold)
             ColorRow("Фон", colors.background) { onColorsChange(colors.copy(background = it)) }
             ColorRow("Звезда", colors.star) { onColorsChange(colors.copy(star = it)) }
@@ -294,25 +318,40 @@ fun SettingsScreen(
                     )
                 )
             }
+
             Text("Визуализация", fontWeight = FontWeight.SemiBold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Checkbox(
                     checked = visuals.showTrail,
-                    onCheckedChange = { onVisualsChange(visuals.copy(showTrail = it)) })
-                Text("Показывать траекторию")
+                    onCheckedChange = { onVisualsChange(visuals.copy(showTrail = it)) }
+                )
+                Text("Показывать траекторию", modifier = Modifier.padding(start = 8.dp))
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Checkbox(
                     checked = visuals.showVelocity,
-                    onCheckedChange = { onVisualsChange(visuals.copy(showVelocity = it)) })
-                Text("Показывать вектор скорости")
+                    onCheckedChange = { onVisualsChange(visuals.copy(showVelocity = it)) }
+                )
+                Text("Показывать вектор скорости", modifier = Modifier.padding(start = 8.dp))
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Checkbox(
                     checked = visuals.showAcceleration,
-                    onCheckedChange = { onVisualsChange(visuals.copy(showAcceleration = it)) })
-                Text("Показывать вектор ускорения")
+                    onCheckedChange = { onVisualsChange(visuals.copy(showAcceleration = it)) }
+                )
+                Text("Показывать вектор ускорения", modifier = Modifier.padding(start = 8.dp))
             }
+
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text("Старт") }
         }
     }
@@ -330,23 +369,16 @@ fun SimulationScreen(
     BackHandler(onBack = onBack)
     var warning by rememberSaveable { mutableStateOf<String?>(null) }
     var running by remember { mutableStateOf(true) }
+
     Scaffold(topBar = {
         TopAppBar(
-            title = {
-                Text(
-                    "Kepler Simulation",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
+            title = { Text("Kepler Simulation", maxLines = 1, overflow = TextOverflow.Ellipsis) },
             actions = {
                 TextButton(onClick = {
                     running = !running
                 }) { Text(if (running) "Пауза" else "Пуск") }
             },
-            navigationIcon = {
-                TextButton(onClick = onBack) { Text("Назад") }
-            }
+            navigationIcon = { TextButton(onClick = onBack) { Text("Назад") } }
         )
     }) { padding ->
         Box(
@@ -358,8 +390,14 @@ fun SimulationScreen(
             var pos by remember { mutableStateOf(Offset.Zero) }
             var vel by remember { mutableStateOf(Offset.Zero) }
             var acc by remember { mutableStateOf(Offset.Zero) }
-            val trail = remember { ArrayDeque<Offset>() }
-            val maxTrail = 2000
+
+            val trailCache = remember {
+                TrailPathCache(
+                    maxPoints = 800,
+                    minSegmentWorld = 0.75f
+                )
+            }
+
             var scale by remember { mutableFloatStateOf(1f) }
             var bounds by remember { mutableStateOf(RectWorld(0f, 0f, 0f, 0f)) }
             var frameScaleToFit by remember { mutableStateOf(world.scaleToFit) }
@@ -372,27 +410,28 @@ fun SimulationScreen(
                     val paddingPix = min(size.width, size.height) * world.paddingFraction
                     val halfW = size.width / 2f - paddingPix
                     val halfH = size.height / 2f - paddingPix
+
                     val worldMaxRadius =
                         orbitParams.initialDistance.toFloat() * world.maxWorldRadiusMultiplier
                     val rNow = pos.getDistance()
                     val scaleFit = if (rNow == 0f) 1f else min(halfW, halfH) / rNow
                     val minScale = min(halfW, halfH) / worldMaxRadius
                     val desiredScale = if (frameScaleToFit) max(scaleFit, minScale) else minScale
-                    scale = desiredScale
-                    bounds = RectWorld(-halfW / scale, -halfH / scale, halfW / scale, halfH / scale)
+                    if (desiredScale != scale) scale = desiredScale
+
+                    val newBounds =
+                        RectWorld(-halfW / scale, -halfH / scale, halfW / scale, halfH / scale)
+                    if (newBounds != bounds) bounds = newBounds
+
                     localWarning =
                         if (frameScaleToFit && scaleFit < minScale) "Орбита слишком велика: применены границы" else null
 
                     drawCircle(colors.star, radius = 10f, center = Offset(cx, cy))
 
-                    if (visuals.showTrail && trail.isNotEmpty()) {
-                        val path = Path()
-                        val first = trail.first()
-                        path.moveTo(cx + first.x * scale, cy - first.y * scale)
-                        trail.forEach {
-                            path.lineTo(cx + it.x * scale, cy - it.y * scale)
-                        }
-                        drawPath(path, color = colors.trail, style = Stroke(width = 1.5f))
+                    if (visuals.showTrail) {
+                        // перестраиваем путь только если нужно
+                        trailCache.buildIfNeeded(scale, cx, cy)
+                        trailCache.draw(this, colors.trail)
                     }
 
                     val px = cx + pos.x * scale
@@ -434,7 +473,6 @@ fun SimulationScreen(
                         val e = orbitParams.eEllipse.coerceIn(0.0, 0.99)
                         sqrt(GM * (1 - e) / x)
                     }
-
                     OrbitType.Parabolic -> sqrt(2 * GM / x)
                     OrbitType.Hyperbolic -> {
                         val e = orbitParams.eHyper.coerceAtLeast(1.1)
@@ -444,7 +482,7 @@ fun SimulationScreen(
                 pos = Offset(x.toFloat(), y.toFloat())
                 vel = Offset(vx.toFloat(), vy.toFloat())
                 acc = Offset.Zero
-                trail.clear()
+                trailCache.clear()
             }
 
             LaunchedEffect(Unit) {
@@ -526,13 +564,14 @@ fun SimulationScreen(
                         warning = null
                     }
 
+                    // обновляем публичные состояния РОВНО один раз за кадр
                     pos = newPos
                     vel = newVel
                     acc = newAcc
 
+                    // добавляем точку в кэш хвоста (с децимацией)
                     if (visuals.showTrail && running) {
-                        trail.addLast(pos)
-                        if (trail.size > maxTrail) trail.removeFirst()
+                        trailCache.tryAdd(newPos)
                     }
                 }
             }
