@@ -34,6 +34,7 @@ import ru.redbyte.krdcompose.screens.race.RaceScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.screens.sudoku.SudokuApp
 import ru.redbyte.krdcompose.screens.wheel.WheelScreen
+import ru.redbyte.krdcompose.ui.components.kepler.KeplerApp
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -69,6 +70,7 @@ class MainActivity : ComponentActivity() {
             composable("pythagorasTreeScreen") { PythagorasTreeScreen() }
             composable("raceScreen") { RaceScreen() }
             composable("sudokuGameScreen") { SudokuApp() }
+            composable("keplerOrbitScreen") { KeplerApp() }
         }
     }
 }
@@ -150,6 +152,14 @@ fun MainScreen(navController: NavController) {
             onClick = { navController.navigate("sudokuGameScreen") }) {
             Text("Судоку")
         }
+
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("keplerOrbitScreen") }) {
+            Text("Моделирование орбиты Кеплера")
+        }
+
     }
 }
 
