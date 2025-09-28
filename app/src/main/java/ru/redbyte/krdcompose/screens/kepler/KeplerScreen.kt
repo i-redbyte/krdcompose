@@ -4,12 +4,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
-import ru.redbyte.krdcompose.others.kepler.SettingsScreen
-import ru.redbyte.krdcompose.others.kepler.SimulationScreen
 import ru.redbyte.krdcompose.others.kepler.model.BoundaryMode
 import ru.redbyte.krdcompose.others.kepler.model.ColorsConfig
 import ru.redbyte.krdcompose.others.kepler.model.OrbitParams
 import ru.redbyte.krdcompose.others.kepler.model.OrbitType
+import ru.redbyte.krdcompose.others.kepler.model.OrbitType.*
 import ru.redbyte.krdcompose.others.kepler.model.VisualConfig
 import ru.redbyte.krdcompose.others.kepler.model.WorldConstraints
 
@@ -29,7 +28,9 @@ fun KeplerScreen() {
         }
     )
     var orbitParams by rememberSaveable(stateSaver = orbitSaver) {
-        mutableStateOf(OrbitParams(OrbitType.Circular, 100.0, 0.5, 1.5))
+        mutableStateOf(
+            OrbitParams(Circular, 100.0, 0.5, 1.5)
+        )
     }
 
     val colorsSaver = listSaver<ColorsConfig, Any>(

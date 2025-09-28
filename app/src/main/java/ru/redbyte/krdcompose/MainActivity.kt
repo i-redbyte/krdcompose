@@ -27,6 +27,7 @@ import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
+import ru.redbyte.krdcompose.screens.kepler.KeplerScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
@@ -34,7 +35,6 @@ import ru.redbyte.krdcompose.screens.race.RaceScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.screens.sudoku.SudokuApp
 import ru.redbyte.krdcompose.screens.wheel.WheelScreen
-import ru.redbyte.krdcompose.others.kepler.KeplerScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
