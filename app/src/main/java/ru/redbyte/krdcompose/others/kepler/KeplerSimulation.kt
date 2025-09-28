@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.screens.kepler
+package ru.redbyte.krdcompose.others.kepler
 
 import android.content.ContentValues
 import android.content.Context
@@ -63,21 +63,29 @@ fun SimulationScreen(
 
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("Kepler Simulation", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            title = {
+                Text("Kepler Simulation", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            },
             actions = {
                 TextButton(onClick = {
                     running = !running
                 }) { Text(if (running) "Пауза" else "Пуск") }
                 TextButton(onClick = {
                     val bmp: Bitmap = rootView.drawToBitmap()
-                    val uri = saveBitmap(context, bmp, "kepler_${System.currentTimeMillis()}.png")
+                    val uri = saveBitmap(
+                        context,
+                        bmp,
+                        "kepler_${System.currentTimeMillis()}.png"
+                    )
                     if (uri != null) {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "image/png"
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        context.startActivity(Intent.createChooser(share, "Поделиться снимком"))
+                        context.startActivity(
+                            Intent.createChooser(share, "Поделиться снимком")
+                        )
                     }
                 }) { Text("Снимок") }
             },
@@ -104,7 +112,9 @@ fun SimulationScreen(
             var scale by remember { mutableFloatStateOf(1f) }
             var userScale by remember { mutableFloatStateOf(1f) }
             var cameraWorld by remember { mutableStateOf(Offset.Zero) }
-            var bounds by remember { mutableStateOf(RectWorld(0f, 0f, 0f, 0f)) }
+            var bounds by remember {
+                mutableStateOf(RectWorld(0f, 0f, 0f, 0f))
+            }
             var frameScaleToFit by remember { mutableStateOf(world.scaleToFit) }
             var localWarning by remember { mutableStateOf<String?>(null) }
 
@@ -136,7 +146,9 @@ fun SimulationScreen(
                     val rNow = pos.getDistance().coerceAtLeast(1e-6f)
                     val scaleFit = min(halfW, halfH) / rNow
                     val minScale = min(halfW, halfH) / worldMaxRadius
-                    val baseScale = if (frameScaleToFit) max(scaleFit, minScale) else minScale
+                    val baseScale = if (frameScaleToFit) {
+                        max(scaleFit, minScale)
+                    } else minScale
                     if (baseScale != scale) scale = baseScale
                     val cx = cx0 - cameraWorld.x * scale * if (frameScaleToFit) 0f else userScale
                     val cy = cy0 + cameraWorld.y * scale * if (frameScaleToFit) 0f else userScale
@@ -151,7 +163,9 @@ fun SimulationScreen(
                     if (newBounds != bounds) bounds = newBounds
 
                     localWarning =
-                        if (frameScaleToFit && scaleFit < minScale) "Орбита слишком велика: применены границы" else null
+                        if (frameScaleToFit && scaleFit < minScale) {
+                            "Орбита слишком велика: применены границы"
+                        } else null
 
                     drawCircle(colors.star, radius = 10f, center = Offset(cx, cy))
 
@@ -166,7 +180,8 @@ fun SimulationScreen(
                             color = colors.trail.copy(alpha = 0.6f),
                             style = Stroke(
                                 width = 1.2f,
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                                pathEffect = PathEffect
+                                    .dashPathEffect(floatArrayOf(10f, 10f), 0f)
                             )
                         )
                     }
@@ -177,11 +192,19 @@ fun SimulationScreen(
 
                     if (visuals.showVelocity) {
                         val arrow = vel * 0.35f
-                        drawArrow(Offset(px, py), arrow * drawScale, colors.velocity)
+                        drawArrow(
+                            Offset(px, py),
+                            arrow * drawScale,
+                            colors.velocity
+                        )
                     }
                     if (visuals.showAcceleration) {
                         val arrow = acc * 6f
-                        drawArrow(Offset(px, py), arrow * drawScale, colors.acceleration)
+                        drawArrow(
+                            Offset(px, py),
+                            arrow * drawScale,
+                            colors.acceleration
+                        )
                     }
 
                     val mu = 1.0
@@ -199,10 +222,14 @@ fun SimulationScreen(
                     val eMag = sqrt(ex * ex + ey * ey)
                     val T = if (eps < 0) 2.0 * Math.PI * sqrt(a * a * a / mu) else Double.NaN
                     hud = buildString {
-                        append("r="); append("%.1f".format(rLen))
-                        append("  v="); append("%.3f".format(vLen))
-                        append("  e="); append(if (eMag.isFinite()) "%.3f".format(eMag) else "—")
-                        append("  a="); append(if (a.isFinite()) "%.1f".format(a) else "∞")
+                        append("r=")
+                        append("%.1f".format(rLen))
+                        append("  v=")
+                        append("%.3f".format(vLen))
+                        append("  e=")
+                        append(if (eMag.isFinite()) "%.3f".format(eMag) else "—")
+                        append("  a=")
+                        append(if (a.isFinite()) "%.1f".format(a) else "∞")
                         if (!T.isNaN()) {
                             append("  T="); append("%.1f".format(T))
                         }
@@ -241,7 +268,11 @@ fun SimulationScreen(
                         .fillMaxWidth(0.9f)
                 ) {
                     Text("Скорость: ${"%.1f".format(speed)}×", color = Color.White)
-                    Slider(value = speed, onValueChange = { speed = it }, valueRange = 0.1f..5f)
+                    Slider(
+                        value = speed,
+                        onValueChange = { speed = it },
+                        valueRange = 0.1f..5f
+                    )
                 }
             }
 
@@ -298,7 +329,10 @@ fun SimulationScreen(
                             first = false
                         } else path.lineTo(px, py)
                     }
-                    futurePath = transformWorldPathToScreen(path, bounds, world.scaleToFit)
+                    futurePath = transformWorldPathToScreen(
+                        path,
+                        world.scaleToFit
+                    )
                     delay(300)
                 }
             }
@@ -394,7 +428,7 @@ fun SimulationScreen(
     }
 }
 
-private fun transformWorldPathToScreen(path: Path, bounds: RectWorld, scaleToFit: Boolean): Path {
+private fun transformWorldPathToScreen(path: Path, scaleToFit: Boolean): Path {
     return if (scaleToFit) {
         path
     } else {
@@ -411,7 +445,8 @@ private fun saveBitmap(context: Context, bitmap: Bitmap, name: String): Uri? {
         put(MediaStore.Images.Media.IS_PENDING, 1)
     }
     val uri =
-        resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return null
+        resolver
+            .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return null
     resolver.openOutputStream(uri)?.use { out ->
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
