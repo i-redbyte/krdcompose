@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.screens.kepler
+package ru.redbyte.krdcompose.others.kepler
 
 import android.content.ContentValues
 import android.content.Context

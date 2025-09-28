@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
+import ru.redbyte.krdcompose.others.kepler.SimulationScreen
 import ru.redbyte.krdcompose.others.kepler.model.BoundaryMode
 import ru.redbyte.krdcompose.others.kepler.model.ColorsConfig
 import ru.redbyte.krdcompose.others.kepler.model.OrbitParams

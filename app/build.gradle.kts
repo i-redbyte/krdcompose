@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.material)
     implementation(libs.kotlin.immutable)
     implementation(libs.navigation.compose)
+    implementation(libs.compose.material.icons.core)
+    implementation(libs.compose.material.icons.extended)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
