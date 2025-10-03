@@ -12,7 +12,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +32,7 @@ import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.kepler.KeplerScreen
+import ru.redbyte.krdcompose.screens.mandelbrot.MandelbrotBackgroundScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
@@ -48,7 +53,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
     @Composable
     private fun InitNavigation() {
@@ -71,17 +75,22 @@ class MainActivity : ComponentActivity() {
             composable("raceScreen") { RaceScreen() }
             composable("sudokuGameScreen") { SudokuApp() }
             composable("keplerOrbitScreen") { KeplerScreen() }
+            composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
         }
     }
 }
 
 @Composable
 fun MainScreen(navController: NavController) {
+    val scroll = rememberScrollState()
     Column(
         modifier = Modifier
             .padding(16.dp)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(scroll),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Открыть экран:")
@@ -158,6 +167,13 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             onClick = { navController.navigate("keplerOrbitScreen") }) {
             Text("Моделирование орбиты Кеплера")
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate("mandelbrotBackgroundScreen") }) {
+            Text("Множество Мандельброта")
         }
 
     }

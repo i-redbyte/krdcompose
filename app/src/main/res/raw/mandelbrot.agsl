@@ -1,0 +1,57 @@
+uniform float2 iResolution; // px
+uniform float2 uCenter;     // центр в плоскости
+uniform float  uScale;      // видимая высота/ширина по короткой стороне
+uniform float  uTime;       // секунды (всегда течёт)
+uniform float  uHueShift;   // [0..1)
+uniform float  uMaxIter;    // итерации (float из Kotlin)
+
+// HSV -> RGB
+float3 hsv2rgb(float3 c) {
+    float4 K = float4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+    float3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+half4 main(float2 fragCoord) {
+    float2 res = iResolution;
+    float2 uv = (fragCoord - 0.5*res) / res.y;
+
+    float lmult   = mix(0.0, 0.03, 1);
+    float jitterX = lmult * sin(uTime*7.3 + uv.y*12.7);
+    float jitterY = lmult * cos(uTime*5.9 + uv.x*9.1);
+
+    float2 c = float2(uCenter.x + (uv.x + jitterX) * uScale,
+                      uCenter.y + (uv.y + jitterY) * uScale);
+    float2 z = float2(0.0, 0.0);
+
+    const int MAX_CAP = 1024;
+    float maxIterF = min(uMaxIter, float(MAX_CAP));
+    int   maxIter  = int(maxIterF);
+
+    int ii = 0;
+    for (int i = 0; i < MAX_CAP; ++i) {
+        ii = i;
+        if (i >= maxIter) break;
+
+        float x = (z.x*z.x - z.y*z.y) + c.x;
+        float y = (2.0*z.x*z.y) + c.y;
+        z = float2(x, y);
+
+        if (dot(z, z) > 4.0) break;
+    }
+
+    float iter = float(ii);
+
+    if (ii < maxIter) {
+        float zn = max(dot(z, z), 1e-8);
+        float nu = log2(0.5 * log(zn));
+        iter = max(0.0, iter - nu + 4.0);
+    }
+
+    float h = fract(uHueShift + 0.015*iter + 0.05*sin(uTime*0.5));
+    float s = 0.9;
+    float v = (ii >= maxIter) ? 0.0 : 1.0;
+    float3 rgb = hsv2rgb(float3(h, s, v));
+
+    return half4(rgb, 1.0);
+}
