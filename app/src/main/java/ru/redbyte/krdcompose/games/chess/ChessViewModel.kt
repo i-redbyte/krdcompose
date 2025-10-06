@@ -62,7 +62,7 @@ class ChessViewModel() : ViewModel() {
     private val _state = MutableStateFlow(
         GameState(
             board = initialBoard(),
-            currentTurn = if (Random.nextBoolean()) WHITE else BLACK,
+            currentTurn = WHITE,
             whiteCastleKingside = true,
             whiteCastleQueenside = true,
             blackCastleKingside = true,
