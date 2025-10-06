@@ -76,3 +76,7 @@ cd krdcompose
 <p align="center">
   <img src="specification/androidkrd.jpg" alt="Превью Android KRD" width="350"/>
 </p>
+
+## Contributors
+
+[![Contributors](https://contrib.rocks/image?repo=i-redbyte/krdcompose)](https://github.com/i-redbyte/krdcompose/graphs/contributors)
