@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +29,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.redbyte.krdcompose.screens.chess.ChessScreen
-import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.kepler.KeplerScreen
@@ -37,6 +37,7 @@ import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
 import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
 import ru.redbyte.krdcompose.screens.race.RaceScreen
+import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
 import ru.redbyte.krdcompose.screens.sudoku.SudokuApp
 import ru.redbyte.krdcompose.screens.wheel.WheelScreen
@@ -83,99 +84,101 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(navController: NavController) {
     val scroll = rememberScrollState()
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(scroll),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Открыть экран:")
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                navController.navigate("dataSliderScreen")
-            }) {
-            Text("Data Slider")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("sapperScreen") }) {
-            Text("Сапер")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("pascalTriangleScreen") }) {
-            Text("Треугольник Паскаля")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("numberSystemScreen") }) {
-            Text("Системы счисления")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("snakeGameScreen") }) {
-            Text("Змейка")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("chessScreen") }) {
-            Text("Шахматы")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("wheelScreen") }) {
-            Text("Колесо фортуны")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("hanoiGameScreen") }) {
-            Text("Ханойские башни")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("pythagorasTreeScreen") }) {
-            Text("Дерево Пифагора")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("raceScreen") }) {
-            Text("Гонки")
-        }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("sudokuGameScreen") }) {
-            Text("Судоку")
-        }
+    Surface {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(scroll),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Открыть экран:")
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    navController.navigate("dataSliderScreen")
+                }) {
+                Text("Data Slider")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("sapperScreen") }) {
+                Text("Сапер")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("pascalTriangleScreen") }) {
+                Text("Треугольник Паскаля")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("numberSystemScreen") }) {
+                Text("Системы счисления")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("snakeGameScreen") }) {
+                Text("Змейка")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("chessScreen") }) {
+                Text("Шахматы")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("wheelScreen") }) {
+                Text("Колесо фортуны")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("hanoiGameScreen") }) {
+                Text("Ханойские башни")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("pythagorasTreeScreen") }) {
+                Text("Дерево Пифагора")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("raceScreen") }) {
+                Text("Гонки")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("sudokuGameScreen") }) {
+                Text("Судоку")
+            }
 
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("keplerOrbitScreen") }) {
-            Text("Моделирование орбиты Кеплера")
-        }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("keplerOrbitScreen") }) {
+                Text("Моделирование орбиты Кеплера")
+            }
 
-        Spacer(Modifier.height(12.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("mandelbrotBackgroundScreen") }) {
-            Text("Множество Мандельброта")
-        }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("mandelbrotBackgroundScreen") }) {
+                Text("Множество Мандельброта")
+            }
 
+        }
     }
 }
 
