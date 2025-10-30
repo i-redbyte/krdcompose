@@ -1,5 +1,6 @@
 package ru.redbyte.krdcompose
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -21,13 +22,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import ru.redbyte.krdcompose.others.juliaSet.JuliaSettingsScreen
+import ru.redbyte.krdcompose.others.juliaSet.JuliaViewModel
+import ru.redbyte.krdcompose.others.juliaSet.JuliaViewerScreen
 import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
@@ -55,6 +64,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("UnrememberedGetBackStackEntry")
     @Composable
     private fun InitNavigation() {
         val navController = rememberNavController()
@@ -77,6 +87,31 @@ class MainActivity : ComponentActivity() {
             composable("sudokuGameScreen") { SudokuApp() }
             composable("keplerOrbitScreen") { KeplerScreen() }
             composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
+//            composable("juliaSetScreen") { JuliaSetScreen() }
+            navigation(startDestination = "julia/viewer", route = "juliaSetScreen") {
+                composable("julia/viewer") { backStackEntry ->
+                    val parent =
+                        remember(navController) { navController.getBackStackEntry("juliaSetScreen") }
+                    val vm: JuliaViewModel = viewModel(parent)
+                    val s by vm.settings.collectAsState()
+                    JuliaViewerScreen(
+                        settings = s,
+                        onUpdate = vm::update,
+                        onOpenSettings = { navController.navigate("julia/settings") }
+                    )
+                }
+                composable("julia/settings") { backStackEntry ->
+                    val parent =
+                        remember(navController) { navController.getBackStackEntry("juliaSetScreen") }
+                    val vm: JuliaViewModel = viewModel(parent)
+                    val s by vm.settings.collectAsState()
+                    JuliaSettingsScreen(
+                        settings = s,
+                        onChange = { vm.update { _ -> it } },
+                        onClose = { navController.navigateUp() }
+                    )
+                }
+            }
         }
     }
 }
@@ -176,6 +211,12 @@ fun MainScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate("mandelbrotBackgroundScreen") }) {
                 Text("Множество Мандельброта")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("juliaSetScreen") }) {
+                Text("Множество Жюлиа")
             }
 
         }

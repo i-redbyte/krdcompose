@@ -1,0 +1,53 @@
+uniform float2 resolution;
+uniform float2 c;
+uniform float zoom;
+uniform float2 center;
+uniform float escape;
+uniform float time;
+uniform float paletteShift;
+uniform float paletteScale;
+uniform int iterations;
+
+const int MAX_ITERS = 2000;
+
+float3 hsv2rgb(float3 cc) {
+    float4 K = float4(1.0, 0.6666667, 0.3333333, 3.0);
+    float3 p = abs(fract(cc.xxx + K.xyz) * 6.0 - K.www);
+    return cc.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), cc.y);
+}
+
+half4 main(float2 fragCoord) {
+    float2 uv = (fragCoord - 0.5 * resolution) / resolution.y;
+    uv = (uv / max(zoom, 1e-6)) + center;
+
+    float2 z = uv;
+    float esc2 = escape * escape;
+    float m2 = 0.0;
+
+    int iters = 0;
+    bool escaped = false;
+
+    for (int k = 0; k < MAX_ITERS; ++k) {
+        float x = z.x * z.x - z.y * z.y + c.x;
+        float y = 2.0 * z.x * z.y + c.y;
+        z = float2(x, y);
+        m2 = dot(z, z);
+        iters = k;
+        if (m2 > esc2) { escaped = true; break; }
+        if (k + 1 >= iterations) { break; }
+    }
+
+    float fiter = max(float(iterations), 1.0);
+    float t = float(iters) / fiter;
+    float smooth = t;
+    if (escaped && m2 > 0.0) {
+        smooth = t + 1.0 - log(log(sqrt(m2))) / log(2.0);
+    }
+
+    bool inside = (!escaped) && (iters + 1 >= iterations);
+    float val = inside ? 0.0 : 1.0;
+
+    float hue = fract(paletteShift + paletteScale * smooth + 0.05 * sin(1.0 * time));
+    float3 col = hsv2rgb(float3(hue, 1.0, val));
+    return half4(col, 1.0);
+}
