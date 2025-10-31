@@ -28,6 +28,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ru.redbyte.krdcompose.others.crack.CrackDemoScreen
+import ru.redbyte.krdcompose.others.crack.LegacyCrackScreen
 import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
@@ -77,6 +79,9 @@ class MainActivity : ComponentActivity() {
             composable("sudokuGameScreen") { SudokuApp() }
             composable("keplerOrbitScreen") { KeplerScreen() }
             composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
+            composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
+            composable("crackDemoScreen") { CrackDemoScreen() }
+            composable("legacyDemoScreen") { LegacyCrackScreen() }
         }
     }
 }
@@ -176,6 +181,18 @@ fun MainScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate("mandelbrotBackgroundScreen") }) {
                 Text("Множество Мандельброта")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        navController.navigate("crackDemoScreen")
+                    } else {
+                        navController.navigate("legacyDemoScreen")
+                    }
+                }) {
+                Text("Трещенки")
             }
 
         }
