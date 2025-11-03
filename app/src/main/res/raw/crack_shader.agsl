@@ -1,5 +1,3 @@
-// Crack overlay shader (no content). Jagged cracks only, thin & clean lines.
-
 uniform float2 uResolution;
 uniform float  uThickness;   // px
 uniform float  uJitter;      // px

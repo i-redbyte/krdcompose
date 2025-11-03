@@ -1,0 +1,37 @@
+uniform shader content;
+
+uniform float2 uResolution;
+uniform float  uStrength;
+uniform float  uRadius;
+
+const int MAX_SEEDS = 16;
+uniform float2 uSeedPos[MAX_SEEDS];
+uniform float  uSeedSalt[MAX_SEEDS];
+uniform float  uSeedCount;
+
+float hash(float x){ return fract(sin(x*12.9898)*43758.5453); }
+float h2(float a,float b){ return hash(a*37.0 + b*17.0 + 0.113); }
+
+half4 main(float2 p){
+    int cnt = int(uSeedCount + 0.5);
+    if (cnt <= 0) return content.eval(p);
+
+    float2 uv = p;
+
+    for (int i = 0; i < MAX_SEEDS; i++) {
+        if (i >= cnt) break;
+        float2 s = uSeedPos[i];
+        float2 d = p - s;
+        float r  = length(d);
+
+        if (r < uRadius) {
+            float t = 1.0 - clamp(r / max(uRadius, 1e-3), 0.0, 1.0);
+            float n = (h2(float(i)*3.3, r*0.015) - 0.5) * 0.6;
+            float mag = (uStrength * (0.25 + 0.75*t)) * (t*t) * (1.0 + n*0.35);
+            float2 dir = (r > 1e-3) ? d / r : float2(0.0, 0.0);
+            uv += dir * mag;
+        }
+    }
+
+    return content.eval(uv);
+}

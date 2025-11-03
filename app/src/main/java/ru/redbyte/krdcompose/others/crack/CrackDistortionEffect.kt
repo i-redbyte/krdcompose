@@ -1,0 +1,69 @@
+package ru.redbyte.krdcompose.others.crack
+
+import android.graphics.RenderEffect
+import android.graphics.RuntimeShader
+import android.os.Build
+import androidx.annotation.RawRes
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
+import ru.redbyte.krdcompose.R
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun Modifier.crackDistortionEffect(
+    seeds: List<CrackSeed>,
+    strengthPx: Float = 3.5f,
+    radiusPx: Float = 180f
+): Modifier = composed {
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
+    val shader = rememberRuntimeShaderFromRaw(R.raw.crack_distort)
+    val effect = remember {
+        RenderEffect.createRuntimeShaderEffect(shader, "content").asComposeRenderEffect()
+    }
+
+    val active = seeds.takeLast(CRACK_MAX_SEEDS)
+    val seedCount = active.size
+    val seedPos = FloatArray(CRACK_MAX_SEEDS * 2)
+    val seedSalt = FloatArray(CRACK_MAX_SEEDS)
+    active.forEachIndexed { i, s ->
+        seedPos[i * 2] = s.x
+        seedPos[i * 2 + 1] = s.y
+        seedSalt[i] = s.salt
+    }
+
+    SideEffect {
+        if (size.width > 0 && size.height > 0) {
+            shader.setFloatUniform("uResolution", size.width.toFloat(), size.height.toFloat())
+            shader.setFloatUniform("uStrength", strengthPx.coerceAtLeast(0f))
+            shader.setFloatUniform("uRadius", radiusPx.coerceAtLeast(1f))
+            shader.setFloatUniform("uSeedPos", seedPos)
+            shader.setFloatUniform("uSeedSalt", seedSalt)
+            shader.setFloatUniform("uSeedCount", seedCount.toFloat())
+        }
+    }
+
+    this
+        .onSizeChanged { size = it }
+        .graphicsLayer {
+            compositingStrategy = CompositingStrategy.Offscreen
+            renderEffect = effect
+        }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+private fun rememberRuntimeShaderFromRaw(@RawRes resId: Int): RuntimeShader {
+    val ctx = LocalContext.current
+    val src = remember(resId) {
+        ctx.resources.openRawResource(resId).bufferedReader().use { it.readText() }
+    }
+    return remember(src) { RuntimeShader(src) }
+}

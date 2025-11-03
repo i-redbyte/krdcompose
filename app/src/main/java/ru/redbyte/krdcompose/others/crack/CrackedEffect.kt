@@ -25,10 +25,9 @@ import kotlin.math.*
 import kotlin.random.Random
 import ru.redbyte.krdcompose.R
 
-/** Должно совпадать с MAX_SEEDS в AGSL (crack_overlay.agsl). */
+/** Должно совпадать с MAX_SEEDS в AGSL (crack_shader.agsl). */
 const val CRACK_MAX_SEEDS: Int = 16
 
-/** Очаг трещины. */
 data class CrackSeed(
     val x: Float,
     val y: Float,
@@ -44,11 +43,10 @@ data class CrackSeed(
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun Modifier.crackedEffect(
     seeds: List<CrackSeed>,
-    thicknessDp: Dp = 3.dp,                 // толщина «жил»
-    jitterPx: Float = 12f,                  // «рваность»
-    crackColor: Color = Color(0x99000000),  // тёмный вклад по трещине
-    haloStrength: Float = 0.45f,            // сила ореола
-    safetyOverlay: Boolean = false,         // CPU-оверлей поверх (для отладки)
+    thicknessDp: Dp = 3.dp,
+    jitterPx: Float = 12f,
+    haloStrength: Float = 0.45f,
+    safetyOverlay: Boolean = false,
     debugSegments: Boolean = false
 ): Modifier = composed {
     val density = LocalDensity.current
@@ -57,7 +55,6 @@ fun Modifier.crackedEffect(
     // === GPU overlay shader (без content), именно crack_overlay.agsl ===
     val overlayShader: RuntimeShader = rememberRuntimeShaderFromRaw(R.raw.crack_shader)
 
-    // Подготовка uniform-массивов семян фиксированной длины
     val active = seeds.takeLast(CRACK_MAX_SEEDS)
     val seedCount = active.size
     val seedPos = FloatArray(CRACK_MAX_SEEDS * 2)
@@ -72,7 +69,6 @@ fun Modifier.crackedEffect(
         seedSalt[i] = s.salt
     }
 
-    // Лёгкая CPU-геометрия для страховочного/дебаг-оверлея
     val overlayCPU = remember(active, layerSize, jitterPx) {
         OverlayGeometry.build(
             active,
@@ -82,7 +78,6 @@ fun Modifier.crackedEffect(
         )
     }
 
-    // Обновляем uniforms на каждую рекомпозицию
     SideEffect {
         if (layerSize.width > 0 && layerSize.height > 0) {
             overlayShader.setFloatUniform(
@@ -96,11 +91,9 @@ fun Modifier.crackedEffect(
             overlayShader.setFloatUniform("uJitter", jitterPx.coerceAtLeast(0f))
             overlayShader.setFloatUniform("uHalo", haloStrength.coerceIn(0f, 1f))
 
-            // Аккуратные цвета оверлея (без «бубликов»)
-            val dark = crackColor               // тёмная «жила»
-            val core = Color(0x66FFFFFF)        // светлый хребет, умеренная альфа
-            val halo = Color(0x2AFFFFFF)        // мягкий ореол
-
+            val dark = Color(0xF0000000)
+            val core = Color(0x55FFFFFF)
+            val halo = Color(0x00000000)
             overlayShader.setFloatUniform("uDarkColor", dark.red, dark.green, dark.blue, dark.alpha)
             overlayShader.setFloatUniform("uCoreColor", core.red, core.green, core.blue, core.alpha)
             overlayShader.setFloatUniform("uHaloColor", halo.red, halo.green, halo.blue, halo.alpha)
@@ -113,16 +106,13 @@ fun Modifier.crackedEffect(
         }
     }
 
-    // Paint для заливки шейдером прямоугольника
     val fwPaint = remember { Paint() }
 
     this
         .onSizeChanged { sz -> if (layerSize != sz) layerSize = sz }
         .drawWithContent {
-            // 1) рисуем базовый контент
             drawContent()
 
-            // 2) GPU-оверлей (AGSL). Видим всегда, RenderEffect не нужен.
             if (seedCount > 0 && layerSize.width > 0 && layerSize.height > 0) {
                 drawIntoCanvas { canvas ->
                     fwPaint.shader = overlayShader
@@ -132,7 +122,6 @@ fun Modifier.crackedEffect(
                 }
             }
 
-            // 3) CPU-оверлей (для отладки/страховки)
             if ((safetyOverlay || debugSegments) && overlayCPU.count > 0) {
                 val w = with(density) { thicknessDp.toPx() }
                 drawOverlayLines(
@@ -144,16 +133,35 @@ fun Modifier.crackedEffect(
         }
 }
 
-/* ================= CPU overlay geometry ================= */
 
 private object OverlayGeometry {
     private const val MAX_SEG = 180
 
     data class Segments(
-        val a: FloatArray, // x0,y0...
-        val b: FloatArray, // x1,y1...
+        val a: FloatArray,
+        val b: FloatArray,
         val count: Int
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Segments
+
+            if (count != other.count) return false
+            if (!a.contentEquals(other.a)) return false
+            if (!b.contentEquals(other.b)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = count
+            result = 31 * result + a.contentHashCode()
+            result = 31 * result + b.contentHashCode()
+            return result
+        }
+    }
 
     fun build(
         seeds: List<CrackSeed>,
@@ -174,7 +182,6 @@ private object OverlayGeometry {
             val radius = lerp(36f, 280f, pow)
             val branches = (6 + (10 * (pow + 0.06f * boost)).roundToInt()).coerceIn(6, 16)
 
-            // радиальные ветви
             val rnd = StableRand.from(s.x, s.y, s.salt)
             val base = rnd.nextFloat() * PI2
             for (i in 0 until branches) {
@@ -208,16 +215,15 @@ private object OverlayGeometry {
                 }
             }
 
-            // кольцевые дуги
             val rings = (1 + (4 * pow)).roundToInt().coerceIn(1, 4)
             val ringRnd = StableRand.from(s.x * 0.5f, s.y * 0.5f, s.salt * 0.5f)
-            var ringBase = ringRnd.nextFloat() * PI2
+            val ringBase = ringRnd.nextFloat() * PI2
             for (r in 0 until rings) {
                 if (count >= MAX_SEG) break
                 val rr = (0.3f + 0.65f * ringRnd.nextFloat()) * radius
                 val arcSeg = 4
                 val span = (0.6f + 0.8f * ringRnd.nextFloat()) * (PI / 2f)
-                var a0 = ringBase + ringRnd.nextFloat() * PI2
+                val a0 = ringBase + ringRnd.nextFloat() * PI2
                 var px = s.x + rr * cos(a0)
                 var py = s.y + rr * sin(a0)
                 for (k in 1..arcSeg) {
@@ -314,7 +320,6 @@ private fun DrawScope.drawOverlayLines(
     }
 }
 
-/* ========================= loader ========================= */
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
