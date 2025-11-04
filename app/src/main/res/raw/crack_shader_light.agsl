@@ -1,0 +1,142 @@
+uniform float2 uResolution;
+uniform float  uThickness;   // px
+uniform float  uJitter;      // px
+uniform float  uHalo;        // 0..1
+
+uniform float4 uDarkColor;   // dark vein (RGBA)
+uniform float4 uCoreColor;   // bright ridge (RGBA)
+uniform float4 uHaloColor;   // soft halo (RGBA)
+
+const int MAX_SEEDS = 16; // sync with Kotlin
+uniform float2 uSeedPos[MAX_SEEDS];
+uniform float  uSeedPow[MAX_SEEDS];   // 0..1
+uniform float  uSeedBoost[MAX_SEEDS]; // 0..6
+uniform float  uSeedSalt[MAX_SEEDS];  // 0..1
+uniform float  uSeedCount;
+
+// ---------- helpers ----------
+float hash(float x) {
+    return fract(sin(x * 12.9898) * 43758.5453);
+}
+
+float h2(float a, float b) {
+    return hash(a * 37.0 + b * 17.0 + 0.113);
+}
+
+// разность углов -PI..PI
+float angDiff(float a, float b) {
+    return atan(sin(a - b), cos(a - b));
+}
+
+// узкое угловое окно, сужающееся к концу ветви (тонкая линия)
+float branchWin(float t) {
+    return mix(0.22, 0.055, clamp(t, 0.0, 1.0)); // радианы
+}
+
+// мягкие разрывы (больше прозрачности, без «кирпичиков»)
+float gapsMask(float t, float freq, float offs) {
+    float tri = abs(fract(t * freq + offs) - 0.5) * 2.0; // 0..1
+    return smoothstep(0.15, 0.65, tri);                  // 0..1
+}
+
+float crackDistance(float2 coord) {
+    int cnt = int(uSeedCount + 0.5);
+    if (cnt <= 0) return 1e9;
+
+    const int   BRANCH_MAX = 12;
+    const float GOLD       = 2.39996323;
+    const float BASE_R     = 42.0;
+    const float MAX_R      = 260.0;
+    const float TAU        = 6.28318530717958647692;
+
+    float minD = 1e9;
+
+    for (int i = 0; i < MAX_SEEDS; i++) {
+        if (i >= cnt) break;
+
+        float2 sPos  = uSeedPos[i];
+        float  pow   = clamp(uSeedPow[i],   0.0, 1.0);
+        float  boost = clamp(uSeedBoost[i], 0.0, 6.0);
+        float  salt  = uSeedSalt[i];
+
+        float R = mix(BASE_R, MAX_R, pow);
+
+        // целевое число ветвей и вероятность отбора
+        float wantF = clamp(6.0 + 6.0 * (pow + 0.05 * boost), 6.0, float(BRANCH_MAX));
+        float keepP = wantF / float(BRANCH_MAX);
+
+        float2 p    = coord - sPos;
+        float  angP = atan(p.y, p.x);
+
+        float baseA = TAU * hash(salt * 7.31 + 0.13);
+        float ph1s  = TAU * hash(salt * 3.11 + 0.27);
+        float ph2s  = TAU * hash(salt * 5.73 + 0.49);
+
+        // --- только радиальные ветви, без осколков и форков ---
+        for (int b = 0; b < BRANCH_MAX; b++) {
+            if (h2(salt * 11.7, float(b)) > keepP) continue;
+
+            float lenJ    = 0.75 + 0.25 * h2(salt * 19.1, float(b));
+            float Rb      = R * lenJ;
+            float jitterA = (h2(salt * 21.7, float(b)) - 0.5) * 0.7;
+            float angle   = baseA + GOLD * float(b) + jitterA;
+
+            float ca = cos(angle);
+            float sa = sin(angle);
+            float2 xAxis = float2(ca,  sa);
+            float2 yAxis = float2(-sa, ca);
+
+            float x = dot(p, xAxis);
+            float y = dot(p, yAxis);
+            if (x < 0.0 || x > Rb) continue;
+
+            float t   = x / max(Rb, 1e-3);
+            float win = branchWin(t);
+            float dAng = abs(angDiff(angP, angle));
+            if (dAng > win) continue;
+
+            // упрощённый wobble: 2 синуса вместо отдельной функции fBm
+            float wob = (sin(10.0 * t + ph1s + float(b)) * 0.7 +
+                         sin(23.0 * t + ph2s)           * 0.3)
+                        * (1.0 - 0.25 * t)
+                        * uJitter * (0.7 + 0.5 * pow);
+
+            float gMask = gapsMask(
+                t,
+                2.5 + 3.0 * h2(salt * 31.1, float(b)),
+                h2(salt * 29.7, float(b))
+            );
+
+            float edge = dAng / max(win, 1e-4);
+
+            float d = abs(y - wob)
+                    + edge * (0.5 * uThickness)          // мягче по краям
+                    + (1.0 - gMask) * (0.20 * uThickness); // разрывы
+
+            minD = min(minD, d);
+        }
+    }
+
+    return minD;
+}
+
+half4 main(float2 coord) {
+    float minD = crackDistance(coord);
+
+    // ↓ тонкие, «острые» линии
+    float t  = max(uThickness, 0.75);
+    float lt = t * 0.55;
+
+    float line  = pow(smoothstep(lt * 1.00, 0.0, minD), 1.35); // тёмная «жила»
+    float core  = pow(smoothstep(lt * 0.60, 0.0, minD), 1.15); // светлый хребет
+    float haloM =      smoothstep(lt * 2.6,  lt * 0.8, minD);  // узкий ореол
+
+    float4 col = float4(0.0);
+    col += uDarkColor * line;
+    col += uCoreColor * core;
+    col += uHaloColor * (haloM * clamp(uHalo, 0.0, 1.0));
+
+    col.a  = clamp(col.a,  0.0, 1.0);
+    col.rgb = clamp(col.rgb, 0.0, 1.0);
+    return half4(col);
+}

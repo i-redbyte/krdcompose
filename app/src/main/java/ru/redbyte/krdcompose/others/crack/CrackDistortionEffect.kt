@@ -3,6 +3,7 @@ package ru.redbyte.krdcompose.others.crack
 import android.graphics.RenderEffect
 import android.graphics.RuntimeShader
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RawRes
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
@@ -82,9 +83,16 @@ fun Modifier.crackDistortionEffect(
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun rememberRuntimeShaderFromRaw(@RawRes resId: Int): RuntimeShader {
-    val ctx = LocalContext.current
-    val src = remember(resId) {
-        ctx.resources.openRawResource(resId).bufferedReader().use { it.readText() }
+    val context = LocalContext.current
+    val source = remember(resId) {
+        context.resources.openRawResource(resId).bufferedReader().use { it.readText() }
     }
-    return remember(src) { RuntimeShader(src) }
+    return remember(source) {
+        try {
+            RuntimeShader(source)
+        } catch (e: IllegalArgumentException) {
+            Log.e("CrackShader", "AGSL compile failed", e)
+            null
+        } as RuntimeShader
+    }
 }

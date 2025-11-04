@@ -3,6 +3,7 @@ package ru.redbyte.krdcompose.others.crack
 import android.graphics.Paint
 import android.graphics.RuntimeShader
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RawRes
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
@@ -53,8 +54,10 @@ fun Modifier.crackedEffect(
     var layerSize by remember { mutableStateOf(IntSize.Zero) }
 
     // === GPU overlay shader (без content), именно crack_overlay.agsl ===
-    val overlayShader: RuntimeShader = rememberRuntimeShaderFromRaw(R.raw.crack_shader)
-
+    val overlayShader: RuntimeShader? = rememberCrackShaderWithFallback(
+        fullResId = R.raw.crack_shader,
+        lightResId = R.raw.crack_shader_light
+    )
     val active = seeds.takeLast(CRACK_MAX_SEEDS)
     val seedCount = active.size
     val seedPos = FloatArray(CRACK_MAX_SEEDS * 2)
@@ -80,7 +83,7 @@ fun Modifier.crackedEffect(
 
     SideEffect {
         if (layerSize.width > 0 && layerSize.height > 0) {
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uResolution",
                 layerSize.width.toFloat(),
                 layerSize.height.toFloat()
@@ -89,15 +92,15 @@ fun Modifier.crackedEffect(
             val thicknessPx = with(density) {
                 thicknessDp.toPx().coerceAtLeast(0.6f)
             }
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uThickness",
                 thicknessPx
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uJitter",
                 jitterPx.coerceAtLeast(0f)
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uHalo",
                 haloStrength.coerceIn(0f, 1f)
             )
@@ -105,21 +108,21 @@ fun Modifier.crackedEffect(
             val dark = Color(0xF0000000)
             val core = Color(0x55FFFFFF)
             val halo = Color(0x00000000)
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uDarkColor",
                 dark.red,
                 dark.green,
                 dark.blue,
                 dark.alpha
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uCoreColor",
                 core.red,
                 core.green,
                 core.blue,
                 core.alpha
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uHaloColor",
                 halo.red,
                 halo.green,
@@ -127,23 +130,23 @@ fun Modifier.crackedEffect(
                 halo.alpha
             )
 
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uSeedPos",
                 seedPos
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uSeedPow",
                 seedPow
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uSeedBoost",
                 seedBoost
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uSeedSalt",
                 seedSalt
             )
-            overlayShader.setFloatUniform(
+            overlayShader?.setFloatUniform(
                 "uSeedCount",
                 seedCount.toFloat()
             )
@@ -157,7 +160,12 @@ fun Modifier.crackedEffect(
         .drawWithContent {
             drawContent()
 
-            if (seedCount > 0 && layerSize.width > 0 && layerSize.height > 0) {
+            if (
+                overlayShader != null &&
+                seedCount > 0 &&
+                layerSize.width > 0 &&
+                layerSize.height > 0
+            ) {
                 drawIntoCanvas { canvas ->
                     fwPaint.shader = overlayShader
                     canvas.nativeCanvas.drawRect(
@@ -233,7 +241,7 @@ private object OverlayGeometry {
                 var px = s.x;
                 var py = s.y
                 val jitterA = (rnd.nextFloat() - 0.5f) * 0.6f
-                val ang = base + 2.39996323f * i + jitterA
+                val ang = base + 2.3999631f * i + jitterA
                 val cx = cos(ang);
                 val sy = sin(ang)
                 val pxn = -sy;
@@ -364,13 +372,34 @@ private fun DrawScope.drawOverlayLines(
     }
 }
 
-
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-private fun rememberRuntimeShaderFromRaw(@RawRes resId: Int): RuntimeShader {
+private fun rememberCrackShaderWithFallback(
+    @RawRes fullResId: Int = R.raw.crack_shader,
+    @RawRes lightResId: Int = R.raw.crack_shader_light
+): RuntimeShader? {
     val context = LocalContext.current
-    val source = remember(resId) {
-        context.resources.openRawResource(resId).bufferedReader().use { it.readText() }
+
+    val fullSource = remember(fullResId) {
+        context.resources.openRawResource(fullResId)
+            .bufferedReader().use { it.readText() }
     }
-    return remember(source) { RuntimeShader(source) }
+    val lightSource = remember(lightResId) {
+        context.resources.openRawResource(lightResId)
+            .bufferedReader().use { it.readText() }
+    }
+
+    return remember(fullSource, lightSource) {
+        try {
+            RuntimeShader(fullSource)
+        } catch (e: IllegalArgumentException) {
+            Log.w("CrackShader", "Full shader failed, falling back to light", e)
+            try {
+                RuntimeShader(lightSource)
+            } catch (e2: IllegalArgumentException) {
+                Log.e("CrackShader", "Even light shader failed", e2)
+                null
+            }
+        }
+    }
 }
