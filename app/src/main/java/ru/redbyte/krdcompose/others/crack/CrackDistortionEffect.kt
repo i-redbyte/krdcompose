@@ -25,38 +25,44 @@ fun Modifier.crackDistortionEffect(
     var size by remember { mutableStateOf(IntSize.Zero) }
 
     val shader = rememberRuntimeShaderFromRaw(R.raw.crack_distort)
-    val effect = remember {
-        RenderEffect.createRuntimeShaderEffect(shader, "content").asComposeRenderEffect()
-    }
 
     val active = seeds.takeLast(CRACK_MAX_SEEDS)
     val seedCount = active.size
-    val seedPos = FloatArray(CRACK_MAX_SEEDS * 2)
-    val seedSalt = FloatArray(CRACK_MAX_SEEDS)
+    val seedPos = remember { FloatArray(CRACK_MAX_SEEDS * 2) }
+    val seedSalt = remember { FloatArray(CRACK_MAX_SEEDS) }
+
     active.forEachIndexed { i, s ->
         seedPos[i * 2] = s.x
         seedPos[i * 2 + 1] = s.y
         seedSalt[i] = s.salt
     }
 
-    SideEffect {
-        if (size.width > 0 && size.height > 0) {
-            shader.setFloatUniform("uResolution", size.width.toFloat(), size.height.toFloat())
-            shader.setFloatUniform("uStrength", strengthPx.coerceAtLeast(0f))
-            shader.setFloatUniform("uRadius", radiusPx.coerceAtLeast(1f))
-            shader.setFloatUniform("uSeedPos", seedPos)
-            shader.setFloatUniform("uSeedSalt", seedSalt)
-            shader.setFloatUniform("uSeedCount", seedCount.toFloat())
-        }
-    }
-
     this
         .onSizeChanged { size = it }
         .graphicsLayer {
             compositingStrategy = CompositingStrategy.Offscreen
-            renderEffect = effect
+
+            if (size.width > 0 && size.height > 0 && seedCount > 0) {
+                shader.setFloatUniform(
+                    "uResolution",
+                    size.width.toFloat(),
+                    size.height.toFloat()
+                )
+                shader.setFloatUniform("uStrength", strengthPx.coerceAtLeast(0f))
+                shader.setFloatUniform("uRadius", radiusPx.coerceAtLeast(1f))
+                shader.setFloatUniform("uSeedPos", seedPos)
+                shader.setFloatUniform("uSeedSalt", seedSalt)
+                shader.setFloatUniform("uSeedCount", seedCount.toFloat())
+
+                renderEffect = RenderEffect
+                    .createRuntimeShaderEffect(shader, "content")
+                    .asComposeRenderEffect()
+            } else {
+                renderEffect = null
+            }
         }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable

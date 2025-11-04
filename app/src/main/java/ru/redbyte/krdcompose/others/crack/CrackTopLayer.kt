@@ -72,8 +72,8 @@ fun CrackRoot(
         val distortMod = if (distortion) {
             Modifier.crackDistortionEffect(
                 seeds = state.seeds,
-                strengthPx = 8f,
-                radiusPx = 260f
+                strengthPx = 12f,
+                radiusPx = 290f
             )
         } else Modifier
 
@@ -94,9 +94,9 @@ fun CrackRoot(
                 }
                 .crackedEffect(
                     seeds = state.seeds,
-                    thicknessDp = 3.2.dp,
-                    jitterPx = 14f,
-                    haloStrength = 0.30f,
+                    thicknessDp = 3.78.dp,
+                    jitterPx = 8f,
+                    haloStrength = 0.68f,
                     safetyOverlay = false,
                     debugSegments = false
                 )

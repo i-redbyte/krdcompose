@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +44,7 @@ fun CrackDemoScreen() {
                 .statusBarsPadding()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF0B1020), Color(0xFF18223A), Color(0xFF0B1020))
+                        listOf(Color(0xFF00897B), Color(0xFF43A047), Color(0xFF00897B))
                     )
                 )
         ) {
@@ -61,6 +62,17 @@ fun CrackDemoScreen() {
                     color = Color(0xFFE6EAF5),
                     textAlign = TextAlign.Center
                 )
+
+                Button(
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .align(Alignment.CenterHorizontally),
+                    onClick = {
+
+                    }
+                ) {
+                    Text("Красивая кнопка")
+                }
             }
         }
     }
