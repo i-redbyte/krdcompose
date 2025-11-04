@@ -86,23 +86,67 @@ fun Modifier.crackedEffect(
                 layerSize.height.toFloat()
             )
 
-            val thicknessPx = with(density) { thicknessDp.toPx().coerceAtLeast(0.6f) }
-            overlayShader.setFloatUniform("uThickness", thicknessPx)
-            overlayShader.setFloatUniform("uJitter", jitterPx.coerceAtLeast(0f))
-            overlayShader.setFloatUniform("uHalo", haloStrength.coerceIn(0f, 1f))
+            val thicknessPx = with(density) {
+                thicknessDp.toPx().coerceAtLeast(0.6f)
+            }
+            overlayShader.setFloatUniform(
+                "uThickness",
+                thicknessPx
+            )
+            overlayShader.setFloatUniform(
+                "uJitter",
+                jitterPx.coerceAtLeast(0f)
+            )
+            overlayShader.setFloatUniform(
+                "uHalo",
+                haloStrength.coerceIn(0f, 1f)
+            )
 
             val dark = Color(0xF0000000)
             val core = Color(0x55FFFFFF)
             val halo = Color(0x00000000)
-            overlayShader.setFloatUniform("uDarkColor", dark.red, dark.green, dark.blue, dark.alpha)
-            overlayShader.setFloatUniform("uCoreColor", core.red, core.green, core.blue, core.alpha)
-            overlayShader.setFloatUniform("uHaloColor", halo.red, halo.green, halo.blue, halo.alpha)
+            overlayShader.setFloatUniform(
+                "uDarkColor",
+                dark.red,
+                dark.green,
+                dark.blue,
+                dark.alpha
+            )
+            overlayShader.setFloatUniform(
+                "uCoreColor",
+                core.red,
+                core.green,
+                core.blue,
+                core.alpha
+            )
+            overlayShader.setFloatUniform(
+                "uHaloColor",
+                halo.red,
+                halo.green,
+                halo.blue,
+                halo.alpha
+            )
 
-            overlayShader.setFloatUniform("uSeedPos", seedPos)
-            overlayShader.setFloatUniform("uSeedPow", seedPow)
-            overlayShader.setFloatUniform("uSeedBoost", seedBoost)
-            overlayShader.setFloatUniform("uSeedSalt", seedSalt)
-            overlayShader.setFloatUniform("uSeedCount", seedCount.toFloat())
+            overlayShader.setFloatUniform(
+                "uSeedPos",
+                seedPos
+            )
+            overlayShader.setFloatUniform(
+                "uSeedPow",
+                seedPow
+            )
+            overlayShader.setFloatUniform(
+                "uSeedBoost",
+                seedBoost
+            )
+            overlayShader.setFloatUniform(
+                "uSeedSalt",
+                seedSalt
+            )
+            overlayShader.setFloatUniform(
+                "uSeedCount",
+                seedCount.toFloat()
+            )
         }
     }
 

@@ -48,11 +48,26 @@ fun Modifier.crackDistortionEffect(
                     size.width.toFloat(),
                     size.height.toFloat()
                 )
-                shader.setFloatUniform("uStrength", strengthPx.coerceAtLeast(0f))
-                shader.setFloatUniform("uRadius", radiusPx.coerceAtLeast(1f))
-                shader.setFloatUniform("uSeedPos", seedPos)
-                shader.setFloatUniform("uSeedSalt", seedSalt)
-                shader.setFloatUniform("uSeedCount", seedCount.toFloat())
+                shader.setFloatUniform(
+                    "uStrength",
+                    strengthPx.coerceAtLeast(0f)
+                )
+                shader.setFloatUniform(
+                    "uRadius",
+                    radiusPx.coerceAtLeast(1f)
+                )
+                shader.setFloatUniform(
+                    "uSeedPos",
+                    seedPos
+                )
+                shader.setFloatUniform(
+                    "uSeedSalt",
+                    seedSalt
+                )
+                shader.setFloatUniform(
+                    "uSeedCount",
+                    seedCount.toFloat()
+                )
 
                 renderEffect = RenderEffect
                     .createRuntimeShaderEffect(shader, "content")

@@ -44,7 +44,11 @@ fun CrackDemoScreen() {
                 .statusBarsPadding()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF00897B), Color(0xFF43A047), Color(0xFF00897B))
+                        listOf(
+                            Color(0xFF00897B),
+                            Color(0xFF43A047),
+                            Color(color = 0xFF00897B)
+                        )
                     )
                 )
         ) {
@@ -57,7 +61,8 @@ fun CrackDemoScreen() {
             ) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Жмите по экрану — появятся трещины.\nПовторный тап по существующей трещине — усилит её.",
+                    "Жмите по экрану — появятся трещины.\n" +
+                            "Повторный тап по существующей трещине — усилит её.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFE6EAF5),
                     textAlign = TextAlign.Center
