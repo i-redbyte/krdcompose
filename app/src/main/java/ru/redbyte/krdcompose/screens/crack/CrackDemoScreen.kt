@@ -1,4 +1,4 @@
-package ru.redbyte.krdcompose.others.crack
+package ru.redbyte.krdcompose.screens.crack
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -14,22 +14,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
-@Composable
-fun LegacyCrackScreen() {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            "Требуется Android 13+ (API 33) для AGSL.\nНа этой версии показана заглушка.",
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center
-        )
-    }
-}
+import ru.redbyte.krdcompose.others.crack.CrackRoot
+import ru.redbyte.krdcompose.others.crack.rememberCrackState
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable

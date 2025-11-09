@@ -28,8 +28,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ru.redbyte.krdcompose.others.crack.CrackDemoScreen
-import ru.redbyte.krdcompose.others.crack.LegacyCrackScreen
+import ru.redbyte.krdcompose.screens.crack.CrackDemoScreen
+import ru.redbyte.krdcompose.screens.crack.LegacyScreen
 import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
@@ -41,6 +41,7 @@ import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
 import ru.redbyte.krdcompose.screens.race.RaceScreen
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
 import ru.redbyte.krdcompose.screens.snake.SnakeGameScreen
+import ru.redbyte.krdcompose.screens.sphere3d.SphereScreen
 import ru.redbyte.krdcompose.screens.sudoku.SudokuApp
 import ru.redbyte.krdcompose.screens.wheel.WheelScreen
 import ru.redbyte.krdcompose.ui.theme.KrdcomposeTheme
@@ -81,7 +82,8 @@ class MainActivity : ComponentActivity() {
             composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
             composable("mandelbrotBackgroundScreen") { MandelbrotBackgroundScreen() }
             composable("crackDemoScreen") { CrackDemoScreen() }
-            composable("legacyDemoScreen") { LegacyCrackScreen() }
+            composable("legacyDemoScreen") { LegacyScreen() }
+            composable("sphereScreen") { SphereScreen() }
         }
     }
 }
@@ -193,6 +195,18 @@ fun MainScreen(navController: NavController) {
                     }
                 }) {
                 Text("Трещенки")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        navController.navigate("sphereScreen")
+                    } else {
+                        navController.navigate("legacyDemoScreen")
+                    }
+                }) {
+                Text("3D Сфера")
             }
 
         }
