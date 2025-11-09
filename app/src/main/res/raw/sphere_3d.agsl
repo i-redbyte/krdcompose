@@ -1,0 +1,65 @@
+uniform float2 iResolution;
+layout(color) uniform half4 sphereColor;
+
+uniform float2 rotation;
+uniform float3 lightDir;
+uniform float  useTexture;
+uniform float2 textureSize;
+uniform shader texture;
+
+const float PI = 3.14159265359;
+
+float3 rotateVec(float3 v, float2 rot) {
+    float sy = sin(rot.y);
+    float cy = cos(rot.y);
+    float sx = sin(rot.x);
+    float cx = cos(rot.x);
+
+    float3 r;
+    r.x = cy * v.x + sy * v.z;
+    r.z = -sy * v.x + cy * v.z;
+    r.y = v.y;
+
+    float y2 = cx * r.y - sx * r.z;
+    float z2 = sx * r.y + cx * r.z;
+    r.y = y2;
+    r.z = z2;
+
+    return r;
+}
+
+half4 main(float2 fragCoord) {
+    float scale = min(iResolution.x, iResolution.y) * 0.5;
+    float2 uv = (fragCoord - 0.5 * iResolution) / scale;
+    float3 ro = float3(0.0, 0.0, 3.0);
+    float3 rd = normalize(float3(uv, -1.5));
+    float b = dot(ro, rd);
+    float c = dot(ro, ro) - 1.0;
+    float h = b * b - c;
+
+    if (h < 0.0) {
+        return half4(0.0);
+    }
+
+    h = sqrt(h);
+    float t = -b - h;
+    float3 pos = ro + t * rd;
+    float3 n   = normalize(pos);
+    float3 L   = normalize(lightDir);
+    float diff = max(dot(n, L), 0.0);
+    float3 base = sphereColor.rgb * (0.15 + 0.85 * diff);
+
+    if (useTexture > 0.5 && textureSize.x > 0.0 && textureSize.y > 0.0) {
+        float3 posTex = rotateVec(pos, rotation);
+        float u = 0.5 + atan(posTex.x, posTex.z) / (2.0 * PI);
+        float v = 0.5 + asin(clamp(posTex.y, -1.0, 1.0)) / PI;
+        float2 texCoord = float2(
+            clamp(u, 0.0, 1.0) * textureSize.x,
+            clamp(v, 0.0, 1.0) * textureSize.y
+        );
+        half4 tex = texture.eval(texCoord);
+        base = mix(base, tex.rgb, tex.a);
+    }
+
+    return half4(base, 1.0);
+}
