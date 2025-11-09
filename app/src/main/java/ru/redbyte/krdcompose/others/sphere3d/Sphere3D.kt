@@ -30,14 +30,14 @@ fun Sphere3D(
     text: String = "",
     textColor: Color = Color.White,
     textSizeSp: Float = 16f,
+    rotationX: Float,
+    rotationY: Float,
+    onRotateDelta: (dx: Float, dy: Float) -> Unit,
 ) {
     val density = LocalDensity.current
 
     val shader: RuntimeShader = rememberSphereShader()
     val brush = remember { ShaderBrush(shader) }
-
-    var rotationX by remember { mutableFloatStateOf(0f) }
-    var rotationY by remember { mutableFloatStateOf(0f) }
 
     val textureInfo = remember(
         useImage, image, useText, text, textColor, textSizeSp, density
@@ -56,14 +56,11 @@ fun Sphere3D(
         modifier = modifier.pointerInput(Unit) {
             detectDragGestures { change, drag ->
                 change.consume()
-                val sensitivity = 0.01f
-                rotationY += drag.x * sensitivity
-                rotationX += drag.y * sensitivity
+                onRotateDelta(drag.x, drag.y)
             }
         }
     ) {
         val sz = size
-
         shader.setFloatUniform("iResolution", sz.width, sz.height)
         shader.setColorUniform("sphereColor", sphereColor.toArgb())
         shader.setFloatUniform("rotation", rotationX, rotationY)
@@ -83,6 +80,7 @@ fun Sphere3D(
         drawRect(brush = brush, size = sz)
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun createSphereShader(context: Context): RuntimeShader {
