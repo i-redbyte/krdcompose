@@ -16,7 +16,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -24,6 +26,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -36,19 +39,63 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.isActive
 import ru.redbyte.krdcompose.R
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-enum class ObstacleType { ENEMY_CAR, MINE, CALTROP }
+sealed interface RoadItem{
+    val ordinal: Int
+}
+enum class ObstacleType : RoadItem { ENEMY_CAR, MINE, CALTROP }
+enum class WeaponType : RoadItem { BERDANKA, MAXIM, EMPTY }
+
+data class WeaponState(
+    val type: WeaponType,
+    val shotInterval: Long,
+    val countBullet: MutableState<Int>,
+    val bullets: SnapshotStateList<Bullet>
+)
+
+private fun WeaponType.generateWeapon(): WeaponState =
+    WeaponState(
+        type = this,
+        shotInterval = when (this) {
+            WeaponType.BERDANKA -> 1_000_000_000L
+            WeaponType.MAXIM -> 300_000_000L
+            WeaponType.EMPTY -> 0L
+        },
+        countBullet = mutableIntStateOf(
+            when (this) {
+                WeaponType.BERDANKA -> 3
+                WeaponType.MAXIM -> 10
+                WeaponType.EMPTY -> 0
+            }
+        ),
+        bullets = mutableStateListOf()
+    )
+
+data class Bullet(
+    val x: MutableState<Float> = mutableFloatStateOf(0f),
+    val y: MutableState<Float> = mutableFloatStateOf(0f),
+    val radius: Float = 15f
+
+) {
+    val center: Offset
+        get() = Offset(x.value, y.value)
+    val rect: Rect
+        get() = Rect(
+            center = center,
+            radius = radius
+        )
+}
+
 
 private data class ObstacleState(
     val id: Long,
     val lane: Int,
-    val type: ObstacleType,
+    val type: RoadItem,
     val widthPx: Float,
     val heightPx: Float,
     val widthDp: Dp,
@@ -170,6 +217,8 @@ fun RacingGame(
     val enemyPainter = painterResource(R.drawable.car_enemy)
     val minePainter = painterResource(R.drawable.mine)
     val caltropPainter = painterResource(R.drawable.caltrop)
+    val berdankaPainter = painterResource(R.drawable.berd)
+    val maximPainter = painterResource(R.drawable.maxim)
 
     var gameSize by remember { mutableStateOf(IntSize.Zero) }
     val laneCount = 3
@@ -204,6 +253,11 @@ fun RacingGame(
     var roadOffset by remember { mutableFloatStateOf(0f) }
     val stripeLenPx = max(24f, laneWidth * 0.35f)
     val stripeGapPx = stripeLenPx
+    val weaponState: MutableState<WeaponState> = remember {
+        mutableStateOf(WeaponType.EMPTY.generateWeapon())
+
+    }
+
 
     DisposableEffect(tiltEnabled) {
         val listener = object : SensorEventListener {
@@ -226,6 +280,7 @@ fun RacingGame(
                     }
                 }
             }
+
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
         }
         if (tiltEnabled) sensorManager.registerListener(listener, accelerometer, SENSOR_DELAY_GAME)
@@ -246,7 +301,7 @@ fun RacingGame(
                 Spacer(Modifier.width(16.dp))
                 Text("Очки: $score", fontWeight = FontWeight.Bold)
             }
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Наклон")
                 Spacer(Modifier.width(8.dp))
                 Switch(checked = tiltEnabled, onCheckedChange = { tiltEnabled = it })
@@ -275,9 +330,11 @@ fun RacingGame(
                     )
                 }
         ) {
-            Canvas(Modifier
-                .matchParentSize()
-                .clipToBounds()) {
+            Canvas(
+                Modifier
+                    .matchParentSize()
+                    .clipToBounds()
+            ) {
                 if (gameSize.width > 0 && gameSize.height > 0) {
                     laneWidth = gameSize.width.toFloat() / laneCount
                     val base = min(laneWidth, gameSize.height / 5f)
@@ -295,6 +352,14 @@ fun RacingGame(
                     topLeft = Offset(size.width - 6f, 0f),
                     size = Size(6f, size.height)
                 )
+                weaponState.value.bullets.forEach { bullet ->
+                    drawCircle(
+                        Color.Red,
+                        radius = bullet.radius,
+                        center = bullet.center
+                    )
+                }
+
 
                 val totalLen = stripeLenPx + stripeGapPx
                 for (i in 1 until laneCount) {
@@ -316,6 +381,9 @@ fun RacingGame(
                     ObstacleType.ENEMY_CAR -> enemyPainter
                     ObstacleType.MINE -> minePainter
                     ObstacleType.CALTROP -> caltropPainter
+                    WeaponType.BERDANKA -> berdankaPainter
+                    WeaponType.MAXIM -> maximPainter
+                    WeaponType.EMPTY -> ColorPainter(Color.Transparent)
                 }
                 val x = o.lane * laneWidth + (laneWidth - o.widthPx) / 2f
                 Image(
@@ -343,6 +411,7 @@ fun RacingGame(
                     val dir = if (carPos < laneCount - 1) 1f else -1f
                     dir * (gameSize.width * 0.12f) * crashProgress
                 }
+
                 else -> 0f
             }
             Image(
@@ -371,8 +440,8 @@ fun RacingGame(
 
         var lastNs = withFrameNanos { it }
         var secAcc = 0f
-
         var lastSpawnMs = 0L
+        var lastShout = 0L
         val baseIntervalMs = 900L
         val minIntervalMs = 380L
         val maxIntervalMs = 1100L
@@ -396,11 +465,14 @@ fun RacingGame(
             return lastBottom == null || lastBottom < -minGapPx
         }
 
-        fun spawnObstacle(now: Long, lane: Int, type: ObstacleType, hScreen: Float) {
+        fun spawnObstacle(now: Long, lane: Int, type: RoadItem, hScreen: Float) {
             val w = when (type) {
                 ObstacleType.ENEMY_CAR -> min(laneWidth * 0.78f, hScreen * 0.20f)
                 ObstacleType.MINE -> laneWidth * 0.52f
                 ObstacleType.CALTROP -> laneWidth * 0.56f
+                WeaponType.BERDANKA -> laneWidth * 0.56f
+                WeaponType.MAXIM -> laneWidth * 0.56f
+                WeaponType.EMPTY -> laneWidth * 0.56f
             }
             val obH = if (type == ObstacleType.ENEMY_CAR) w * 1.25f else w
             val wDp = with(density) { w.toDp() }
@@ -421,7 +493,6 @@ fun RacingGame(
             val now = withFrameNanos { it }
             val dt = ((now - lastNs).coerceAtLeast(0)) / 1_000_000_000f
             lastNs = now
-
             val h = gameSize.height.toFloat()
             val baseSpeed = h / 3.5f
             val speedPx = baseSpeed * speed
@@ -457,8 +528,14 @@ fun RacingGame(
                 for (lane in candidate) {
                     if (placed >= toPlace) break
                     if (!canSpawnInLane(lane, minGap)) continue
-                    val type = when (Random.nextInt(3)) {
-                        0 -> ObstacleType.ENEMY_CAR; 1 -> ObstacleType.MINE; else -> ObstacleType.CALTROP
+                    val type = when (Random.nextInt(6)) {
+                        0 -> ObstacleType.ENEMY_CAR;
+                        1 -> ObstacleType.MINE;
+                        2 -> ObstacleType.CALTROP
+                        4 -> WeaponType.BERDANKA
+                        5 -> WeaponType.MAXIM
+                        6 -> WeaponType.EMPTY
+                        else -> WeaponType.EMPTY
                     }
                     spawnObstacle(now, lane, type, h)
                     placed++
@@ -483,15 +560,46 @@ fun RacingGame(
                 }
             }
 
+            val bulletsToRemove = mutableListOf<Bullet>()
+            if (now - lastShout > weaponState.value.shotInterval / speed) {
+                if (weaponState.value.countBullet.value > 0) {
+                    weaponState.value.bullets.add(
+                        Bullet(
+                            x = mutableFloatStateOf(carX + carWidth / 2),
+                            y = mutableFloatStateOf(carY - 20f)
+                        )
+                    )
+                    lastShout = now
+                    weaponState.value.countBullet.value -= 1
+                }
+
+            }
+
+            weaponState.value.bullets.forEach { bullet ->
+                val newY = bullet.y.value - speedPx * dt * 1.05f
+                bullet.y.value = newY
+                if (newY < 0) {
+                    bulletsToRemove.add(bullet)
+                }
+            }
+            weaponState.value.bullets.removeAll(bulletsToRemove)
+
+
             if (running) {
                 val carLeft = carPos * laneWidth + (laneWidth - carWidth) / 2f
                 val carTop = carY
                 val carHit =
                     insetRectByScale(carLeft, carTop, carLeft + carWidth, carTop + carHeight, 0.75f)
+                val obstaclesToRemove = mutableSetOf<ObstacleState>()
                 loop@ for (o in obstacles) {
                     val ox = o.lane * laneWidth + (laneWidth - o.widthPx) / 2f
                     val scale = when (o.type) {
-                        ObstacleType.ENEMY_CAR -> 0.70f; ObstacleType.MINE -> 0.55f; ObstacleType.CALTROP -> 0.60f
+                        ObstacleType.ENEMY_CAR -> 0.70f;
+                        ObstacleType.MINE -> 0.55f;
+                        ObstacleType.CALTROP -> 0.60f
+                        WeaponType.BERDANKA -> 0.5f
+                        WeaponType.MAXIM -> 0.8f
+                        WeaponType.EMPTY -> 0f
                     }
                     val oHit = insetRectByScale(
                         ox,
@@ -500,10 +608,29 @@ fun RacingGame(
                         o.y.value + o.heightPx,
                         scale
                     )
+                    weaponState.value.bullets.forEach { bullet ->
+                        if (overlap(bullet.rect, oHit)) {
+                            obstaclesToRemove.add(o)
+                            score += 100
+                        }
+                    }
                     if (overlap(carHit, oHit)) {
-                        running = false; crashType = o.type; crashProgress = 0f; break@loop
+                        when (o.type) {
+                            is ObstacleType -> {
+                                running = false; crashType = o.type; crashProgress =
+                                    0f; break@loop
+                            }
+
+                            is WeaponType -> {
+                                obstaclesToRemove.add(o)
+                                weaponState.value = o.type.generateWeapon()
+                            }
+                        }
+
                     }
                 }
+                obstacles.removeAll(obstaclesToRemove)
+                obstacles.removeAll(obstaclesToRemove)
             } else if (crashType != null) {
                 crashProgress = (crashProgress + dt / 0.9f).coerceAtMost(1f)
                 if (crashProgress >= 1f) {
@@ -538,6 +665,7 @@ fun RacingGame(
             }
         }
     }
+
 
     if (showGameOver) {
         AlertDialog(
