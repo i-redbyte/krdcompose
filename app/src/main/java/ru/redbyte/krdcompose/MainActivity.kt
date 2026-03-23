@@ -34,6 +34,7 @@ import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.kepler.KeplerScreen
+import ru.redbyte.krdcompose.screens.list.hackerList.HackerListScreen
 import ru.redbyte.krdcompose.screens.mandelbrot.MandelbrotBackgroundScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
@@ -84,6 +85,7 @@ class MainActivity : ComponentActivity() {
             composable("crackDemoScreen") { CrackDemoScreen() }
             composable("legacyDemoScreen") { LegacyScreen() }
             composable("sphereScreen") { SphereScreen() }
+            composable("hackerListScreen") { HackerListScreen() }
         }
     }
 }
@@ -208,7 +210,12 @@ fun MainScreen(navController: NavController) {
                 }) {
                 Text("3D Сфера")
             }
-
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("hackerListScreen") }) {
+                Text("Hacker List")
+            }
         }
     }
 }

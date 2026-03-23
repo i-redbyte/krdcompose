@@ -32,6 +32,10 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
   **дерево Пифагора** на `Canvas` и может плавно анимировать угол между ветвями.
 - **[ColorPickerDialog](specification/components/colorPickerDialog.md)** — компонент позволяющий
   пользователю выбрать цвет в формате RGBA (Red, Green, Blue, Alpha) через слайдеры.
+- **[ScanHighlight](specification/components/scanHighlight.md)** — компонент для создания эффекта
+  сканирования.
+- **[DecodedContent](specification/components/decodedContent.md)** — компонент для создания эффекта
+  **декодирования данных**.
 
 ## 🎮 Игры
 
