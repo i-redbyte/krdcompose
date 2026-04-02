@@ -36,6 +36,10 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
   сканирования.
 - **[DecodedContent](specification/components/decodedContent.md)** — компонент для создания эффекта
   **декодирования данных**.
+- **[LightningBackground](specification/components/lightning.md)** - компонент для создания
+  анимированного фона с эффектом молнии,
+  который может быть использован в различных интерфейсах для добавления динамики и визуального
+  интереса.
 
 ## 🎮 Игры
 
@@ -61,6 +65,7 @@ Compose сообществом [Android Krasnodar](https://t.me/androidkrd).
 - **[Трещенки](specification/others/сracks.md)** — Генерация реалистичных трещин на поверхности.
   Рендер происходит на GPU через AGSL (`RuntimeShader`).
 - **[Сфера 3D](specification/others/sphere3d.md)** — 3D-сфера, рендерящаяся с помощью AGSL.
+
 ## 🚀 Запуск проекта
 
 ```bash

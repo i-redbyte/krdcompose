@@ -1,10 +1,10 @@
 package ru.redbyte.krdcompose
-
-import android.os.Build
 import android.os.Bundle
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,6 +34,7 @@ import ru.redbyte.krdcompose.screens.chess.ChessScreen
 import ru.redbyte.krdcompose.screens.dataSlider.DataSliderScreen
 import ru.redbyte.krdcompose.screens.hanoi.HanoiGameScreen
 import ru.redbyte.krdcompose.screens.kepler.KeplerScreen
+import ru.redbyte.krdcompose.screens.lightning.LightningDemoApp
 import ru.redbyte.krdcompose.screens.list.hackerList.HackerListScreen
 import ru.redbyte.krdcompose.screens.mandelbrot.MandelbrotBackgroundScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
             composable("legacyDemoScreen") { LegacyScreen() }
             composable("sphereScreen") { SphereScreen() }
             composable("hackerListScreen") { HackerListScreen() }
+            composable("lightningDemoScreen") { LightningDemoApp() }
         }
     }
 }
@@ -215,6 +217,12 @@ fun MainScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate("hackerListScreen") }) {
                 Text("Hacker List")
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("lightningDemoScreen") }) {
+                Text("Молния")
             }
         }
     }
