@@ -39,6 +39,7 @@ import ru.redbyte.krdcompose.screens.list.hackerList.HackerListScreen
 import ru.redbyte.krdcompose.screens.mandelbrot.MandelbrotBackgroundScreen
 import ru.redbyte.krdcompose.screens.numberSystem.NumberSystemScreen
 import ru.redbyte.krdcompose.screens.pascalTriangle.PascalTriangleScreen
+import ru.redbyte.krdcompose.screens.planetCard.PlanetCardScreen
 import ru.redbyte.krdcompose.screens.pythagoras.PythagorasTreeScreen
 import ru.redbyte.krdcompose.screens.race.RaceScreen
 import ru.redbyte.krdcompose.screens.sapper.SapperGameScreen
@@ -88,6 +89,7 @@ class MainActivity : ComponentActivity() {
             composable("sphereScreen") { SphereScreen() }
             composable("hackerListScreen") { HackerListScreen() }
             composable("lightningDemoScreen") { LightningDemoApp() }
+            composable("planetCardScreen") { PlanetCardScreen() }
         }
     }
 }
@@ -223,6 +225,13 @@ fun MainScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate("lightningDemoScreen") }) {
                 Text("Молния")
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("planetCardScreen") }) {
+                Text("Карточка планеты")
             }
         }
     }
